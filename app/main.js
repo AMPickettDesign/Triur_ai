@@ -18,12 +18,12 @@ const VENV_PYTHON = path.join(TRIUR_ROOT, 'venv', 'Scripts', 'python.exe');
 const SERVER_SCRIPT = path.join(TRIUR_ROOT, 'src', 'server.py');
 
 function startPythonServer() {
-  console.log('[Abi] Starting Python brain server...');
-  console.log('[Abi] Python path:', VENV_PYTHON);
-  console.log('[Abi] Server script:', SERVER_SCRIPT);
+  console.log('[Triur.ai] Starting Python brain server...');
+  console.log('[Triur.ai] Python path:', VENV_PYTHON);
+  console.log('[Triur.ai] Server script:', SERVER_SCRIPT);
 
   pythonProcess = spawn(VENV_PYTHON, [SERVER_SCRIPT], {
-    cwd: path.join(ABI_ROOT, 'src'),
+    cwd: path.join(TRIUR_ROOT, 'src'),
     env: { ...process.env }
   });
 
