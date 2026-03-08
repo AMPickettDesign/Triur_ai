@@ -42,165 +42,105 @@
     </div>
   </div>
 
-  <!-- Main layout -->
+  <!-- Main layout (bento) -->
   <div id="main">
 
-    <!-- Compact Sidebar (horizontal, above chat) -->
-    <div id="sidebar">
-      <div class="widget" id="widget-mood">
-        <div class="widget-header">
-          <span class="widget-icon">&#9672;</span>
-          <span class="widget-title">Mood</span>
+    <!-- Top Bento Row: Mood (1/3) + Feelings (2/3) -->
+    <div class="bento-row bento-top">
+      <div class="bento-card bento-mood" id="widget-mood">
+        <span id="mood-bar-emoji" class="bento-mood-emoji">&#9673;</span>
+        <span id="mood-dominant" class="bento-mood-label">...</span>
+        <div class="bento-energy">
+          <div class="bar-track"><div class="bar-fill" id="energy-fill" style="width:50%"></div></div>
         </div>
-        <div class="widget-content">
-          <div id="mood-dominant">...</div>
-          <div id="mood-energy-bar">
-            <div class="bar-label">Energy</div>
-            <div class="bar-track"><div class="bar-fill" id="energy-fill" style="width:50%"></div></div>
-          </div>
-        </div>
+        <div id="mood-emotions"></div>
       </div>
-
-      <div class="widget" id="widget-relationship">
-        <div class="widget-header">
-          <span class="widget-icon">&#9825;</span>
-          <span class="widget-title">Feelings</span>
-        </div>
-        <div class="widget-content">
-          <div id="rel-opinion">...</div>
-        </div>
-      </div>
-
-      <div class="widget" id="widget-memory">
-        <div class="widget-header">
-          <span class="widget-icon">&#10022;</span>
-          <span class="widget-title">Memory</span>
-          <button id="memory-toggle-btn" class="memory-toggle small">View</button>
-        </div>
-        <div class="widget-content">
-          <div id="memory-stats">
-            <div class="mem-stat">Facts: <span id="mem-facts">0</span></div>
-          </div>
-          <div id="memory-dropdown" class="memory-dropdown">
-            <div class="mem-section">
-              <div class="mem-section-header" data-section="facts">Facts &#9656;</div>
-              <div class="mem-section-content" id="mem-facts-list"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="widget" id="widget-time">
-        <div class="widget-header">
-          <span class="widget-icon">&#9719;</span>
-          <span class="widget-title">Time</span>
-        </div>
-        <div class="widget-content">
-          <div id="time-display">--:--</div>
-          <div id="date-display">...</div>
+      <div class="bento-card bento-feelings" id="widget-feelings">
+        <div class="bento-card-label">Feelings</div>
+        <div id="rel-opinion" class="bento-feelings-status">...</div>
+        <div class="rel-meters">
+          <div class="rel-meter"><span class="rel-label">Trust</span><div class="bar-track"><div class="bar-fill rel-trust" style="width:50%"></div></div></div>
+          <div class="rel-meter"><span class="rel-label">Fond</span><div class="bar-track"><div class="bar-fill rel-fondness" style="width:50%"></div></div></div>
+          <div class="rel-meter"><span class="rel-label">Respect</span><div class="bar-track"><div class="bar-fill rel-respect" style="width:50%"></div></div></div>
+          <div class="rel-meter"><span class="rel-label">Comfort</span><div class="bar-track"><div class="bar-fill rel-comfort" style="width:30%"></div></div></div>
         </div>
       </div>
     </div>
 
-    <!-- Chat area -->
+    <!-- Chat Well -->
     <div id="chat-area">
-      <div id="avatar-space">
-        <div id="avatar-placeholder">
-          <div id="avatar-mood-indicator"></div>
-          <span id="avatar-label">A</span>
-        </div>
-        <div id="avatar-status">
-          <span id="mood-text">...</span>
-        </div>
-        <button id="end-chat-btn" title="End conversation and save">End Chat</button>
-      </div>
-
       <div id="messages" role="log" aria-live="polite"></div>
+
+      <!-- Sprite overlay at bottom of chat -->
+      <div id="sprite-area">
+        <canvas id="sprite-canvas"></canvas>
+      </div>
 
       <div id="gif-picker">
         <input type="text" id="gif-search" placeholder="Search GIFs..." />
         <div id="gif-results"></div>
       </div>
+    </div>
 
-      <div id="input-area">
-        <textarea id="message-input" placeholder="Talk to Abi..." rows="1" autofocus></textarea>
-        <button id="gif-btn" title="Send a GIF">GIF</button>
-        <button id="send-btn" title="Send">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+    <!-- Input Row -->
+    <div id="input-area">
+      <button id="action-mode-btn" title="Toggle Action Mode — let the AI control your PC">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="18" rx="3"/>
+          <path d="M7 9l3 3-3 3M13 15h4"/>
+        </svg>
+      </button>
+      <textarea id="message-input" placeholder="Talk to Abi..." rows="1" autofocus></textarea>
+      <button id="gif-btn" title="Send a GIF">GIF</button>
+      <button id="send-btn" title="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom Bento Row: Memory + Time + End Chat -->
+    <div class="bento-row bento-bottom">
+      <div class="bento-card bento-memory" id="widget-memory">
+        <div class="bento-card-label">Memory</div>
+        <div class="bento-memory-stats">
+          <span><span id="mem-convos" class="bento-stat-num">0</span> convos</span>
+          <span><span id="mem-facts" class="bento-stat-num">0</span> facts</span>
+        </div>
+      </div>
+      <div class="bento-card bento-time" id="widget-time">
+        <div id="time-display">--:--</div>
+        <div id="date-display">...</div>
+      </div>
+      <button class="bento-card bento-action" id="end-chat-btn" title="End conversation and save">
+        <span class="bento-action-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 11.94 11.94 0 0 0 3.75.6 2 2 0 0 1 2 2v3.39a2 2 0 0 1-2.22 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-6-6A19.79 19.79 0 0 1 3.27 4.22 2 2 0 0 1 5.2 2h3.4a2 2 0 0 1 2 1.72 12.07 12.07 0 0 0 .6 3.75 2 2 0 0 1-.45 2.11z"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
           </svg>
-        </button>
-      </div>
+        </span>
+        <span class="bento-action-text">End</span>
+      </button>
     </div>
 
-    <!-- Sidebar -->
-    <div id="sidebar">
-      <div class="widget" id="widget-mood">
-        <div class="widget-header">
-          <span class="widget-icon">&#9672;</span>
-          <span class="widget-title">Mood</span>
-        </div>
-        <div class="widget-content">
-          <div id="mood-dominant">...</div>
-          <div id="mood-energy-bar">
-            <div class="bar-label">Energy</div>
-            <div class="bar-track"><div class="bar-fill" id="energy-fill" style="width:50%"></div></div>
-          </div>
-          <div id="mood-emotions"></div>
-        </div>
+    <!-- Hidden elements for JS compatibility -->
+    <span id="mood-text" style="display:none">...</span>
+    <span id="avatar-mood-indicator" style="display:none"></span>
+    <span id="avatar-label" style="display:none">A</span>
+    <span id="rel-opinion-mini" style="display:none">...</span>
+    <span id="mem-convos-mini" style="display:none">0</span>
+    <span id="time-mini" style="display:none">--:--</span>
+    <div id="memory-dropdown" class="memory-dropdown" style="display:none">
+      <div class="mem-section">
+        <div class="mem-section-header" data-section="facts">Facts &#9656;</div>
+        <div class="mem-section-content" id="mem-facts-list"></div>
       </div>
-
-      <div class="widget" id="widget-relationship">
-        <div class="widget-header">
-          <span class="widget-icon">&#9825;</span>
-          <span class="widget-title">Feelings</span>
-        </div>
-        <div class="widget-content">
-          <div id="rel-opinion">...</div>
-          <div class="rel-meters">
-            <div class="rel-meter"><span class="rel-label">Trust</span><div class="bar-track"><div class="bar-fill rel-trust" style="width:50%"></div></div></div>
-            <div class="rel-meter"><span class="rel-label">Fondness</span><div class="bar-track"><div class="bar-fill rel-fondness" style="width:50%"></div></div></div>
-            <div class="rel-meter"><span class="rel-label">Respect</span><div class="bar-track"><div class="bar-fill rel-respect" style="width:50%"></div></div></div>
-            <div class="rel-meter"><span class="rel-label">Comfort</span><div class="bar-track"><div class="bar-fill rel-comfort" style="width:30%"></div></div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="widget" id="widget-memory">
-        <div class="widget-header">
-          <span class="widget-icon">&#10022;</span>
-          <span class="widget-title">Memory</span>
-          <button id="memory-toggle-btn" class="memory-toggle small">View</button>
-        </div>
-        <div class="widget-content">
-          <div id="memory-stats">
-            <div class="mem-stat">Convos: <span id="mem-convos">0</span></div>
-            <div class="mem-stat">Facts: <span id="mem-facts">0</span></div>
-          </div>
-          <div id="memory-dropdown" class="memory-dropdown">
-            <div class="mem-section">
-              <div class="mem-section-header" data-section="facts">Facts &#9656;</div>
-              <div class="mem-section-content" id="mem-facts-list"></div>
-            </div>
-            <div class="mem-section">
-              <div class="mem-section-header" data-section="opinions">Opinions &#9656;</div>
-              <div class="mem-section-content" id="mem-opinions-list"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="widget" id="widget-time">
-        <div class="widget-header">
-          <span class="widget-icon">&#9719;</span>
-          <span class="widget-title">Time</span>
-        </div>
-        <div class="widget-content">
-          <div id="time-display">--:--</div>
-          <div id="date-display">...</div>
-        </div>
+      <div class="mem-section">
+        <div class="mem-section-header" data-section="opinions">Opinions &#9656;</div>
+        <div class="mem-section-content" id="mem-opinions-list"></div>
       </div>
     </div>
+    <button id="memory-toggle-btn" style="display:none">View</button>
   </div>
 
     <!-- Onboarding Overlay (first run only) -->

@@ -1,7 +1,7 @@
 {
-  "name": "abi",
-  "version": "0.2.0",
-  "description": "Abigail (Abi) - Personal AI Assistant",
+  "name": "triur-ai",
+  "version": "0.3.0",
+  "description": "Triur.ai — Personal AI companion that grows with you",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

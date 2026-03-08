@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from brain import Brain
+from actions import classify_action, execute_action
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
@@ -50,11 +51,12 @@ def chat():
     global last_activity
     data = request.json
     msg = data.get("message", "").strip()
+    action_mode = data.get("action_mode", False)
     if not msg:
         return jsonify({"error": "Empty message"}), 400
     last_activity = datetime.now()
     b = active()
-    response = b.think(msg)
+    response = b.think(msg, action_mode=action_mode)
     last_activity = datetime.now()  # Update again after response
     return jsonify({
         "response": response,
@@ -350,6 +352,34 @@ def reset_sibling():
     else:
         return jsonify({"error": f"Unknown reset type: {reset_type}"}), 400
     return jsonify({"reset": True, **result})
+
+
+# ─── System Actions ───
+
+@app.route("/api/action/classify", methods=["POST"])
+def action_classify():
+    """Check if an action is safe, dangerous, or blocked."""
+    data = request.json
+    action_type = data.get("action_type", "")
+    safety = classify_action(action_type)
+    return jsonify({"action_type": action_type, "safety": safety})
+
+
+@app.route("/api/action/execute", methods=["POST"])
+def action_execute():
+    """Execute a system action. Frontend should only call this after permission check."""
+    data = request.json
+    action_type = data.get("action_type", "")
+    params = data.get("params", {})
+
+    safety = classify_action(action_type)
+    if safety == "blocked":
+        return jsonify({"success": False, "error": "Action is blocked for safety", "safety": "blocked"}), 403
+
+    result = execute_action(action_type, params)
+    result["action_type"] = action_type
+    result["safety"] = safety
+    return jsonify(result)
 
 
 @app.route("/api/ping", methods=["GET"])

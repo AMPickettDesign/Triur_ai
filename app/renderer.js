@@ -1,5 +1,5 @@
 /**
- * Sibling AI — Renderer
+ * Triur.ai — Renderer
  * All UI logic: chat, sibling switching, theme swapping, reactions,
  * settings, resets, and self-initiated message polling.
  */
@@ -12,7 +12,7 @@ const messagesEl = $('messages'), inputEl = $('message-input'), sendBtn = $('sen
 const moodText = $('mood-text'), moodDominant = $('mood-dominant');
 const energyFill = $('energy-fill'), moodEmotions = $('mood-emotions');
 const relOpinion = $('rel-opinion');
-const memConvos = $('mem-convos'), memFacts = $('mem-facts'), memJournals = $('mem-journals');
+const memConvos = $('mem-convos'), memFacts = $('mem-facts');
 const timeDisplay = $('time-display'), dateDisplay = $('date-display');
 const titlebarName = $('titlebar-name'), titlebarStatus = $('titlebar-status');
 const avatarMood = $('avatar-mood-indicator'), avatarLabel = $('avatar-label');
@@ -20,6 +20,7 @@ const avatarMood = $('avatar-mood-indicator'), avatarLabel = $('avatar-label');
 // ─── State ───
 let isWaiting = false, isConnected = false, sessionEnded = false;
 let activeSibling = 'abi';
+let actionMode = false;
 let msgCounter = 0;
 const REACTIONS = ['\u2764\uFE0F', '\uD83D\uDE02', '\uD83D\uDC4D', '\uD83D\uDE2E', '\uD83D\uDE22', '\uD83D\uDD25', '\uD83D\uDC80'];
 const THEME_MAP = { abi: '', david: 'theme-david', quinn: 'theme-quinn' };
@@ -50,15 +51,6 @@ function updateColorblindFromToggles() {
   
   applyColorblind(mode);
   return mode;
-}
-
-// ─── Sidebar Toggle ───
-const sidebarEl = $('sidebar');
-const sidebarBtn = $('btn-sidebar');
-if (sidebarBtn) {
-  sidebarBtn.addEventListener('click', () => {
-    sidebarEl.classList.toggle('open');
-  });
 }
 
 // ─── IPC ───
@@ -167,7 +159,7 @@ function toggleReaction(msgId, emoji, reactor) {
   }
 }
 
-async function getAbiReaction(msgId, text) {
+async function getSiblingReaction(msgId, text) {
   const r = await apiPost('/api/react', { message: text, sender: 'user' });
   if (r && r.emoji) toggleReaction(msgId, r.emoji, activeSibling);
 }
@@ -178,42 +170,146 @@ function showThinking() {
   t.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
   messagesEl.appendChild(t);
   messagesEl.scrollTop = messagesEl.scrollHeight;
+  spriteOnThinking();
 }
-function hideThinking() { const t = $('thinking-indicator'); if (t) t.remove(); }
+function hideThinking() {
+  const t = $('thinking-indicator'); if (t) t.remove();
+  spriteOnResponse();
+}
 
 async function sendMessage() {
   const text = inputEl.value.trim();
   if (!text || isWaiting || sessionEnded) return;
   const userMsgId = addMessage(text, 'user');
   inputEl.value = ''; inputEl.style.height = 'auto';
+  spriteOnUserMessage(); // Sprite reacts to user sending a message
   isWaiting = true; nudgePaused = true; showThinking(); sendBtn.disabled = true;
 
-  const result = await apiPost('/api/chat', { message: text });
+  const result = await apiPost('/api/chat', { message: text, action_mode: actionMode });
   hideThinking(); isWaiting = false; nudgePaused = false; sendBtn.disabled = false;
 
   if (result) {
-    addMessage(result.response, activeSibling);
+    if (actionMode) {
+      // Action mode: parse and execute action tags
+      const { cleanText, actions } = parseActions(result.response);
+      addMessage(cleanText, activeSibling);
+      if (actions.length) processActions(actions);
+    } else {
+      // Chat mode: strip any accidental action tags, never execute
+      const cleaned = result.response.replace(/\s*\[ACTION:\w+:\{[^}]*\}]\s*/g, '').trim();
+      addMessage(cleaned || result.response, activeSibling);
+    }
     updateSidebar(result);
-    getAbiReaction(userMsgId, text);
+    getSiblingReaction(userMsgId, text);
   } else {
     addMessage("*blinks* Can't think right now. Is the brain server running?", activeSibling);
   }
   inputEl.focus();
 }
 
+// ─── PC System Actions ───
+function parseActions(text) {
+  // Find [ACTION:type:{params}] tags in the AI response
+  const actionRegex = /\[ACTION:(\w+):(\{[^}]*\})\]/g;
+  const actions = [];
+  let match;
+  while ((match = actionRegex.exec(text)) !== null) {
+    try {
+      actions.push({ type: match[1], params: JSON.parse(match[2]) });
+    } catch (e) {
+      // Malformed JSON in action tag — skip it
+    }
+  }
+  // Strip action tags from visible text
+  const cleanText = text.replace(/\s*\[ACTION:\w+:\{[^}]*\}]\s*/g, '').trim();
+  return { cleanText: cleanText || text, actions };
+}
+
+async function processActions(actions) {
+  for (const action of actions) {
+    // Check safety level first
+    const classResult = await apiPost('/api/action/classify', { action_type: action.type });
+    if (!classResult) continue;
+
+    if (classResult.safety === 'blocked') {
+      addSystemMessage(`Action blocked for safety: ${action.type}`);
+      continue;
+    }
+
+    if (classResult.safety === 'safe') {
+      // Auto-execute safe actions
+      const result = await apiPost('/api/action/execute', { action_type: action.type, params: action.params });
+      if (result && result.success) {
+        addSystemMessage(`Done: ${result.message || action.type}`);
+      } else if (result) {
+        addSystemMessage(`Failed: ${result.error || 'Unknown error'}`);
+      }
+    } else {
+      // Dangerous — ask permission
+      showActionPermission(action);
+    }
+  }
+}
+
+function showActionPermission(action) {
+  // Build a human-readable description
+  const descriptions = {
+    run_command: `Run command: ${action.params.command || '?'}`,
+    move_file: `Move file: ${action.params.source || '?'} to ${action.params.destination || '?'}`,
+    copy_file: `Copy file: ${action.params.source || '?'} to ${action.params.destination || '?'}`,
+    create_file: `Create file: ${action.params.path || '?'}`,
+    create_directory: `Create folder: ${action.params.path || '?'}`,
+    delete_file: `Delete: ${action.params.path || '?'}`,
+    kill_process: `Kill process: ${action.params.process_name || '?'}`,
+  };
+  const desc = descriptions[action.type] || `${action.type}: ${JSON.stringify(action.params)}`;
+
+  // Use a confirm dialog (simple but effective)
+  const allowed = confirm(`${NAME_MAP[activeSibling]} wants to:\n\n${desc}\n\nAllow this action?`);
+  if (allowed) {
+    apiPost('/api/action/execute', { action_type: action.type, params: action.params })
+      .then(result => {
+        if (result && result.success) {
+          addSystemMessage(`Done: ${result.message || action.type}`);
+        } else if (result) {
+          addSystemMessage(`Failed: ${result.error || 'Unknown error'}`);
+        }
+      });
+  } else {
+    addSystemMessage(`Action denied: ${action.type}`);
+  }
+}
+
 // ─── Sidebar ───
+const MOOD_EMOJIS = {
+  happy: '\uD83D\uDE0A', content: '\uD83D\uDE0C', excited: '\u2728', playful: '\uD83D\uDE1C',
+  amused: '\uD83D\uDE04', grateful: '\uD83D\uDE4F', loving: '\u2764\uFE0F', proud: '\uD83D\uDE0E',
+  calm: '\uD83C\uDF3F', neutral: '\u2B50', curious: '\uD83E\uDDD0', thoughtful: '\uD83E\uDD14',
+  sad: '\uD83D\uDE1E', melancholy: '\uD83C\uDF27\uFE0F', lonely: '\uD83D\uDCA7', hurt: '\uD83D\uDE22',
+  anxious: '\uD83D\uDE30', worried: '\uD83D\uDE1F', stressed: '\uD83D\uDE2C', overwhelmed: '\uD83D\uDE35',
+  angry: '\uD83D\uDE20', frustrated: '\uD83D\uDE24', annoyed: '\uD83D\uDE12', irritated: '\uD83D\uDE44',
+  bored: '\uD83D\uDE34', tired: '\uD83D\uDE29', confused: '\uD83D\uDE15', surprised: '\uD83D\uDE32',
+};
+
 function updateSidebar(data) {
   if (data.dominant_emotion) {
-    moodDominant.textContent = data.dominant_emotion;
-    moodText.textContent = `Feeling ${data.dominant_emotion}`;
+    if (moodDominant) moodDominant.textContent = data.dominant_emotion;
+    if (moodText) moodText.textContent = `Feeling ${data.dominant_emotion}`;
+    const emojiEl = $('mood-bar-emoji');
+    if (emojiEl) {
+      const key = data.dominant_emotion.toLowerCase();
+      emojiEl.textContent = MOOD_EMOJIS[key] || '\u2B50';
+    }
+    // Trigger sprite reaction for strong emotions
+    emotionSpriteReaction(data.dominant_emotion);
   }
-  if (data.energy !== undefined) energyFill.style.width = `${data.energy * 100}%`;
-  if (data.emotions) {
+  if (data.energy !== undefined && energyFill) energyFill.style.width = `${data.energy * 100}%`;
+  if (data.emotions && moodEmotions) {
     moodEmotions.innerHTML = '';
     Object.entries(data.emotions)
       .sort((a, b) => b[1] - a[1])
       .filter(([_, v]) => v > 0.25)
-      .slice(0, 6)
+      .slice(0, 3)
       .forEach(([name, val]) => {
         const tag = document.createElement('span');
         tag.className = `emotion-tag${val > 0.5 ? ' high' : ''}`;
@@ -222,7 +318,9 @@ function updateSidebar(data) {
       });
   }
   if (data.relationship) {
-    relOpinion.textContent = data.relationship.label;
+    if (relOpinion) relOpinion.textContent = data.relationship.label;
+    const miniRel = $('rel-opinion-mini');
+    if (miniRel) miniRel.textContent = data.relationship.label;
     const colors = { love: '#FFB7C5', like: '#A2AE9D', neutral: '#F0B8B8', dislike: '#C75F71', hostile: '#913F4D' };
     avatarMood.style.background = colors[data.relationship.label] || colors.neutral;
   }
@@ -243,12 +341,14 @@ async function refreshStatus() {
     relationship_details: s.relationship_details
   });
   if (s.memory_stats) {
-    memConvos.textContent = s.memory_stats.total_conversations || 0;
-    memJournals.textContent = s.memory_stats.total_journal_entries || 0;
+    const convCount = s.memory_stats.total_conversations || 0;
+    if (memConvos) memConvos.textContent = convCount;
+    const miniConvos = $('mem-convos-mini');
+    if (miniConvos) miniConvos.textContent = `${convCount} convos`;
   }
   // Get fact count from memory endpoint
   const mem = await apiGet('/api/memory');
-  if (mem) memFacts.textContent = mem.fact_count || 0;
+  if (mem && memFacts) memFacts.textContent = mem.fact_count || 0;
 }
 
 // ─── Sibling Switching ───
@@ -273,10 +373,17 @@ async function switchSibling(newId) {
   applyTheme(newId);
   titlebarName.textContent = name;
   avatarLabel.textContent = newId[0].toUpperCase();
-  inputEl.placeholder = `Talk to ${name}...`;
+  // Swap sprite to new sibling's character
+  if (spriteAssignments[newId]) {
+    await loadSpriteCharacter(spriteAssignments[newId]);
+  }
+  inputEl.placeholder = actionMode
+    ? `Ask ${name} to do something on your PC...`
+    : `Talk to ${name}...`;
   sessionEnded = false;
   $('end-chat-btn').disabled = false;
-  $('end-chat-btn').textContent = 'End Chat';
+  const endTextSwitch = $('end-chat-btn').querySelector('.bento-action-text');
+  if (endTextSwitch) endTextSwitch.textContent = 'End';
   $('end-chat-btn').classList.remove('ended');
   inputEl.disabled = false;
   sendBtn.disabled = false;
@@ -290,9 +397,9 @@ async function switchSibling(newId) {
   messagesEl.innerHTML = '';
   const greeting = await apiGet('/api/greeting');
   if (greeting) {
+    addSystemMessage(`Conversation #${greeting.conversation_number} | ${greeting.time_of_day}`);
     addMessage(greeting.greeting, newId);
     moodText.textContent = `Feeling ${greeting.mood_hint}`;
-    addSystemMessage(`Conversation #${greeting.conversation_number} | ${greeting.time_of_day}`);
   }
   await refreshStatus();
   // Restart nudge polling for new sibling
@@ -316,8 +423,11 @@ async function loadSiblingStatuses() {
 // ─── Time Widget ───
 function updateTime() {
   const now = new Date();
-  timeDisplay.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  dateDisplay.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (timeDisplay) timeDisplay.textContent = timeStr;
+  if (dateDisplay) dateDisplay.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+  const timeMini = $('time-mini');
+  if (timeMini) timeMini.textContent = timeStr;
   const hour = now.getHours();
   if (hour >= 6 && hour < 18) {
     document.body.classList.add('daytime');
@@ -333,18 +443,134 @@ inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey)
 inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px'; });
 sendBtn.addEventListener('click', sendMessage);
 
-// GIF button
-const gifBtn = $('gif-btn');
-if (gifBtn) {
-  gifBtn.addEventListener('click', () => {
-    const picker = $('gif-picker');
-    if (picker) { picker.classList.toggle('open'); if (picker.classList.contains('open')) $('gif-search').focus(); }
+// ─── Action Mode Toggle ───
+const actionModeBtn = $('action-mode-btn');
+const inputArea = $('input-area');
+if (actionModeBtn) {
+  actionModeBtn.addEventListener('click', () => {
+    actionMode = !actionMode;
+    actionModeBtn.classList.toggle('active', actionMode);
+    inputArea.classList.toggle('action-mode', actionMode);
+    inputEl.placeholder = actionMode
+      ? `Ask ${NAME_MAP[activeSibling]} to do something on your PC...`
+      : `Talk to ${NAME_MAP[activeSibling]}...`;
+    inputEl.focus();
   });
 }
+
+// ─── GIF Picker (GIPHY API) ───
+const GIPHY_API_KEY = 'Zg4a7VJ3GgVIq6YCzrI4BtjFwMPD8lxZ';
+const gifBtn = $('gif-btn');
+const gifSearch = $('gif-search');
+const gifResults = $('gif-results');
+const gifPicker = $('gif-picker');
+let gifDebounce = null;
+
+if (gifBtn) {
+  gifBtn.addEventListener('click', () => {
+    if (gifPicker) {
+      gifPicker.classList.toggle('open');
+      if (gifPicker.classList.contains('open')) {
+        gifSearch.focus();
+        // Load trending GIFs when opening with empty search
+        if (!gifSearch.value.trim()) loadTrendingGifs();
+      }
+    }
+  });
+}
+
+// Close picker when clicking outside
 document.addEventListener('click', e => {
-  const picker = $('gif-picker');
-  if (picker && picker.classList.contains('open') && !picker.contains(e.target) && e.target !== gifBtn) picker.classList.remove('open');
+  if (gifPicker && gifPicker.classList.contains('open') && !gifPicker.contains(e.target) && e.target !== gifBtn) {
+    gifPicker.classList.remove('open');
+  }
 });
+
+// Search as user types (debounced)
+if (gifSearch) {
+  gifSearch.addEventListener('input', () => {
+    clearTimeout(gifDebounce);
+    const query = gifSearch.value.trim();
+    if (!query) {
+      loadTrendingGifs();
+      return;
+    }
+    gifDebounce = setTimeout(() => searchGifs(query), 400);
+  });
+}
+
+async function searchGifs(query) {
+  if (GIPHY_API_KEY === 'PASTE_YOUR_KEY_HERE') {
+    gifResults.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:11px;grid-column:1/-1;">GIPHY API key not set. Get one at developers.giphy.com/dashboard</div>';
+    return;
+  }
+  try {
+    const url = `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20&rating=pg-13`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    displayGifs(data.data || []);
+  } catch (e) {
+    gifResults.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:11px;grid-column:1/-1;">Failed to load GIFs.</div>';
+  }
+}
+
+async function loadTrendingGifs() {
+  if (GIPHY_API_KEY === 'PASTE_YOUR_KEY_HERE') {
+    gifResults.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:11px;grid-column:1/-1;">GIPHY API key not set. Get one at developers.giphy.com/dashboard</div>';
+    return;
+  }
+  try {
+    const url = `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=pg-13`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    displayGifs(data.data || []);
+  } catch (e) {
+    gifResults.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:11px;grid-column:1/-1;">Failed to load GIFs.</div>';
+  }
+}
+
+function displayGifs(results) {
+  gifResults.innerHTML = '';
+  if (!results.length) {
+    gifResults.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:11px;grid-column:1/-1;">No GIFs found.</div>';
+    return;
+  }
+  results.forEach(gif => {
+    // Use fixed_height_small for preview, original for sending
+    const previewUrl = gif.images?.fixed_height_small?.url || gif.images?.fixed_height?.url;
+    const fullUrl = gif.images?.original?.url || gif.images?.fixed_height?.url || previewUrl;
+    if (!previewUrl) return;
+
+    const img = document.createElement('img');
+    img.src = previewUrl;
+    img.alt = gif.title || 'GIF';
+    img.loading = 'lazy';
+    img.addEventListener('click', () => sendGif(fullUrl));
+    gifResults.appendChild(img);
+  });
+}
+
+async function sendGif(gifUrl) {
+  if (!gifUrl || isWaiting || sessionEnded) return;
+  // Close the picker
+  gifPicker.classList.remove('open');
+  gifSearch.value = '';
+
+  // Show the GIF as a user message
+  const imgHtml = `<img class="gif-message" src="${gifUrl}" alt="GIF" />`;
+  addMessage(imgHtml, 'user');
+
+  // Send to AI as a description
+  isWaiting = true; nudgePaused = true; showThinking(); sendBtn.disabled = true;
+  const result = await apiPost('/api/chat', { message: '[User sent a GIF]' });
+  hideThinking(); isWaiting = false; nudgePaused = false; sendBtn.disabled = false;
+
+  if (result) {
+    addMessage(result.response, activeSibling);
+    updateSidebar(result);
+  }
+  inputEl.focus();
+}
 
 // ─── Settings ───
 const settingsOverlay = $('settings-overlay');
@@ -412,14 +638,18 @@ document.querySelectorAll('.reset-btn').forEach(btn => {
 const endChatBtn = $('end-chat-btn');
 async function endChat() {
   if (sessionEnded || !isConnected) return;
-  endChatBtn.disabled = true; endChatBtn.textContent = 'Saving...';
+  endChatBtn.disabled = true;
+  const endTextSaving = endChatBtn.querySelector('.bento-action-text');
+  if (endTextSaving) endTextSaving.textContent = 'Saving...';
   addSystemMessage(`Ending conversation... ${NAME_MAP[activeSibling]} is reflecting.`);
   inputEl.disabled = true; sendBtn.disabled = true;
 
   const r = await apiPost('/api/save');
   sessionEnded = true;
   stopNudgePolling();
-  endChatBtn.textContent = 'Session Ended';
+  setSpriteAnimation('Dead', true); // Session over — stay down
+  const endTextDone = endChatBtn.querySelector('.bento-action-text');
+  if (endTextDone) endTextDone.textContent = 'Ended';
   endChatBtn.classList.add('ended');
   inputEl.placeholder = 'Session ended. Switch siblings or restart to chat again.';
   addSystemMessage(r && r.reflection ? `Session saved. ${NAME_MAP[activeSibling]} wrote a reflection.` : 'Session saved.');
@@ -450,6 +680,7 @@ async function loadMemoryData() {
   if (!mem) return;
 
   const factsList = $('mem-facts-list');
+  if (!factsList) return;
   factsList.innerHTML = '';
   let hasFacts = false;
   if (mem.facts) {
@@ -467,16 +698,16 @@ async function loadMemoryData() {
   if (!hasFacts) factsList.innerHTML = '<div class="mem-empty">No facts stored yet.</div>';
 
   const opList = $('mem-opinions-list');
-  opList.innerHTML = '';
-  if (mem.opinions && Object.keys(mem.opinions).length) {
-    Object.entries(mem.opinions).forEach(([topic, data]) => {
-      const d = document.createElement('div'); d.className = 'mem-item';
-      d.innerHTML = `<span class="mem-key">${topic}:</span> ${typeof data === 'object' && data.opinion ? data.opinion : data}`;
-      opList.appendChild(d);
-    });
-  } else opList.innerHTML = '<div class="mem-empty">No opinions formed yet.</div>';
-
-  $('mem-patterns-list').innerHTML = '<div class="mem-empty">Patterns are tracked internally.</div>';
+  if (opList) {
+    opList.innerHTML = '';
+    if (mem.opinions && Object.keys(mem.opinions).length) {
+      Object.entries(mem.opinions).forEach(([topic, data]) => {
+        const d = document.createElement('div'); d.className = 'mem-item';
+        d.innerHTML = `<span class="mem-key">${topic}:</span> ${typeof data === 'object' && data.opinion ? data.opinion : data}`;
+        opList.appendChild(d);
+      });
+    } else opList.innerHTML = '<div class="mem-empty">No opinions formed yet.</div>';
+  }
 }
 
 // ─── Onboarding (First Run) ───
@@ -571,6 +802,13 @@ document.querySelectorAll('.sibling-card').forEach(card => {
     onboardingComplete = true;
     titlebarStatus.textContent = 'online';
 
+    // Initialize sprites for first time
+    initSpriteAssignments(null); // No profile yet, generates random
+    if (spriteAssignments[activeSibling]) {
+      await loadSpriteCharacter(spriteAssignments[activeSibling]);
+      startSpriteLoop();
+    }
+
     // The sibling sends the first message
     const firstMsg = await apiPost('/api/first-message', { sibling: activeSibling });
     if (firstMsg && firstMsg.messages) {
@@ -660,6 +898,242 @@ function flashTitlebar() {
   setTimeout(() => titlebar.classList.remove('nudge-flash'), 1500);
 }
 
+// ─── Sprite Controller ───
+const SPRITE_ASSIGNMENTS = {
+  abi:   ['Enchantress', 'Knight'],
+  david: ['Swordsman', 'Archer'],
+  quinn: ['Musketeer', 'Wizard']
+};
+
+const SPRITE_FRAMES = {
+  Enchantress: { Idle: 5, Walk: 8, Run: 8, Jump: 8, Hurt: 2, Dead: 5 },
+  Knight:      { Idle: 6, Walk: 8, Run: 7, Jump: 6, Hurt: 3, Dead: 4 },
+  Musketeer:   { Idle: 5, Walk: 8, Run: 8, Jump: 7, Hurt: 2, Dead: 4 },
+  Swordsman:   { Idle: 8, Walk: 8, Run: 8, Jump: 8, Hurt: 3, Dead: 3 },
+  Wizard:      { Idle: 6, Walk: 7, Run: 8, Jump: 11, Hurt: 4, Dead: 4 },
+  Archer:      { Idle: 6, Walk: 8, Run: 8, Jump: 9, Hurt: 3, Dead: 3 }
+};
+
+const spriteCanvas = $('sprite-canvas');
+const spriteCtx = spriteCanvas ? spriteCanvas.getContext('2d') : null;
+let spriteAssignments = {};
+let currentSpriteChar = null;
+let spriteImages = {};
+let spriteAnim = 'Idle';
+let spriteFrame = 0;
+let spriteTimer = null;
+let spriteLocked = false;       // True when animation shouldn't be interrupted (Dead, drag)
+const SPRITE_FPS = 150;
+const SPRITE_SIZE = 128;
+
+// ─── Sprite: Interaction State ───
+let pokeTimes = [];             // Timestamps of recent pokes
+let isDragging = false;
+let dragOffsetX = 0;
+
+function initSpriteAssignments(profile) {
+  if (profile && profile.sprite_assignments) {
+    spriteAssignments = profile.sprite_assignments;
+  } else {
+    spriteAssignments = {};
+    for (const [sib, options] of Object.entries(SPRITE_ASSIGNMENTS)) {
+      spriteAssignments[sib] = options[Math.floor(Math.random() * options.length)];
+    }
+    apiPost('/api/profile', { sprite_assignments: spriteAssignments });
+  }
+}
+
+function loadSpriteSheet(charName, animName) {
+  const key = `${charName}/${animName}`;
+  if (spriteImages[key]) return Promise.resolve(spriteImages[key]);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => { spriteImages[key] = img; resolve(img); };
+    img.onerror = () => { resolve(null); };
+    img.src = `assets/sprites/${charName}/${animName}.png`;
+  });
+}
+
+async function loadSpriteCharacter(charName) {
+  currentSpriteChar = charName;
+  const anims = ['Idle', 'Walk', 'Run', 'Jump', 'Hurt', 'Dead'];
+  await Promise.all(anims.map(a => loadSpriteSheet(charName, a)));
+  spriteAnim = 'Idle';
+  spriteFrame = 0;
+  spriteLocked = false;
+}
+
+function setSpriteAnimation(animName, lock = false) {
+  if (!currentSpriteChar) return;
+  if (spriteLocked && !lock) return;  // Don't interrupt locked animations
+  if (spriteAnim === animName && !lock) return;
+  spriteAnim = animName;
+  spriteFrame = 0;
+  spriteLocked = lock;
+}
+
+function startSpriteLoop() {
+  if (spriteTimer) clearInterval(spriteTimer);
+  spriteTimer = setInterval(renderSpriteFrame, SPRITE_FPS);
+  initSpriteInteractions();
+}
+
+function renderSpriteFrame() {
+  if (!spriteCtx || !currentSpriteChar) return;
+  const key = `${currentSpriteChar}/${spriteAnim}`;
+  const img = spriteImages[key];
+  if (!img) return;
+
+  const frameCount = SPRITE_FRAMES[currentSpriteChar]?.[spriteAnim] || 1;
+  spriteCanvas.width = SPRITE_SIZE;
+  spriteCanvas.height = SPRITE_SIZE;
+  spriteCtx.clearRect(0, 0, SPRITE_SIZE, SPRITE_SIZE);
+  spriteCtx.drawImage(img, spriteFrame * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE, 0, 0, SPRITE_SIZE, SPRITE_SIZE);
+
+  spriteFrame++;
+  if (spriteFrame >= frameCount) {
+    if (spriteAnim === 'Dead' && !sessionEnded) {
+      // Overwhelmed — stay down briefly, then revive
+      spriteFrame = frameCount - 1;
+      if (!isDragging) {
+        setTimeout(() => {
+          if (spriteAnim === 'Dead' && !sessionEnded) {
+            spriteLocked = false;
+            spriteAnim = 'Idle';
+            spriteFrame = 0;
+          }
+        }, 3000);
+      }
+    } else if (spriteAnim === 'Dead' && sessionEnded) {
+      spriteFrame = frameCount - 1; // Stay dead on session end
+    } else if (spriteAnim === 'Jump' || spriteAnim === 'Hurt') {
+      spriteFrame = 0;
+      spriteLocked = false;
+      spriteAnim = 'Idle';
+    } else if (spriteAnim === 'Run' && !isDragging) {
+      spriteFrame = 0;
+      spriteLocked = false;
+      spriteAnim = 'Idle';
+    } else {
+      spriteFrame = 0; // Loop (Idle, Walk, Run while dragging)
+    }
+  }
+}
+
+// ─── Sprite: Event-Driven Reactions ───
+
+// Called when user sends a message — sprite gets excited
+function spriteOnUserMessage() {
+  if (spriteLocked || sessionEnded) return;
+  setSpriteAnimation('Jump');
+}
+
+// Called when AI starts thinking — sprite paces
+function spriteOnThinking() {
+  if (spriteLocked || sessionEnded) return;
+  setSpriteAnimation('Walk');
+}
+
+// Called when AI finishes responding — back to idle (emotion may override)
+function spriteOnResponse() {
+  if (spriteLocked || sessionEnded) return;
+  setSpriteAnimation('Idle');
+}
+
+// Called when emotions update — react to strong feelings
+function emotionSpriteReaction(dominantEmotion) {
+  if (!dominantEmotion || spriteLocked || sessionEnded) return;
+  const e = dominantEmotion.toLowerCase();
+  const happyEmotions = ['happy', 'excited', 'playful', 'amused', 'grateful', 'loving', 'proud', 'content'];
+  const sadEmotions = ['sad', 'melancholy', 'lonely', 'hurt', 'anxious', 'worried', 'stressed', 'overwhelmed'];
+
+  if (happyEmotions.includes(e)) {
+    setSpriteAnimation('Jump');
+  } else if (sadEmotions.includes(e)) {
+    setSpriteAnimation('Hurt');
+  }
+}
+
+// ─── Sprite: Click / Poke / Drag ───
+function initSpriteInteractions() {
+  if (!spriteCanvas) return;
+  spriteCanvas.style.cursor = 'grab';
+  spriteCanvas.style.pointerEvents = 'auto';
+
+  // Make sure the sprite area allows pointer events on the canvas
+  const area = $('sprite-area');
+  if (area) area.style.pointerEvents = 'none'; // Area itself is transparent to clicks
+  spriteCanvas.style.pointerEvents = 'auto';    // But the canvas catches them
+
+  // --- Click / Poke ---
+  spriteCanvas.addEventListener('mousedown', (e) => {
+    if (sessionEnded) return;
+    const now = Date.now();
+
+    // Check for overwhelm (5 pokes in 8 seconds)
+    pokeTimes.push(now);
+    pokeTimes = pokeTimes.filter(t => now - t < 8000);
+    if (pokeTimes.length >= 5) {
+      // Overwhelmed! Pass out.
+      pokeTimes = [];
+      setSpriteAnimation('Dead', true);
+      return;
+    }
+
+    // Start drag tracking
+    isDragging = false;
+    dragOffsetX = e.clientX - spriteCanvas.getBoundingClientRect().left;
+
+    const onMove = (me) => {
+      if (!isDragging) {
+        // Only start drag if moved more than 5px
+        if (Math.abs(me.clientX - (e.clientX)) > 5) {
+          isDragging = true;
+          spriteCanvas.style.cursor = 'grabbing';
+          spriteCanvas.style.transition = 'none'; // Disable smooth transition while dragging
+          setSpriteAnimation('Run', true);
+        }
+        return;
+      }
+      // Move sprite to mouse position
+      const areaRect = area.getBoundingClientRect();
+      let newLeft = me.clientX - areaRect.left - dragOffsetX;
+      newLeft = Math.max(0, Math.min(newLeft, areaRect.width - 200));
+
+      // Flip based on movement direction
+      const currentLeft = spriteCanvas.offsetLeft;
+      if (newLeft > currentLeft) {
+        spriteCanvas.style.transform = 'none';
+      } else if (newLeft < currentLeft) {
+        spriteCanvas.style.transform = 'scaleX(-1)';
+      }
+      spriteCanvas.style.left = `${newLeft}px`;
+    };
+
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      spriteCanvas.style.cursor = 'grab';
+      spriteCanvas.style.transition = 'left 0.5s ease, transform 0.3s ease';
+
+      if (isDragging) {
+        // Was dragging — drop them, return to idle
+        isDragging = false;
+        spriteLocked = false;
+        setSpriteAnimation('Idle');
+      } else {
+        // Was a click/poke — play Hurt (ouch!)
+        if (!spriteLocked) {
+          setSpriteAnimation('Hurt');
+        }
+      }
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
 // ─── Boot ───
 async function boot() {
   addSystemMessage('Waking up...');
@@ -697,6 +1171,13 @@ async function boot() {
   // Returning user — apply saved colorblind mode
   if (profile && profile.colorblind_mode) applyColorblind(profile.colorblind_mode);
 
+  // Initialize sprites
+  initSpriteAssignments(profile);
+  if (spriteAssignments[activeSibling]) {
+    await loadSpriteCharacter(spriteAssignments[activeSibling]);
+    startSpriteLoop();
+  }
+
   // Apply theme for active sibling
   applyTheme(activeSibling);
   titlebarName.textContent = NAME_MAP[activeSibling];
@@ -710,9 +1191,9 @@ async function boot() {
 
   const greeting = await apiGet('/api/greeting');
   if (greeting) {
+    addSystemMessage(`Conversation #${greeting.conversation_number} | ${greeting.time_of_day}`);
     addMessage(greeting.greeting, activeSibling);
     moodText.textContent = `Feeling ${greeting.mood_hint}`;
-    addSystemMessage(`Conversation #${greeting.conversation_number} | ${greeting.time_of_day}`);
   }
 
   await refreshStatus();

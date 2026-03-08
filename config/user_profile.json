@@ -10,5 +10,10 @@
   "custom_notes": "",
   "communication_style": "casual",
   "colorblind_mode": "none",
-  "onboarding_complete": true
+  "onboarding_complete": true,
+  "sprite_assignments": {
+    "abi": "Enchantress",
+    "david": "Archer",
+    "quinn": "Wizard"
+  }
 }

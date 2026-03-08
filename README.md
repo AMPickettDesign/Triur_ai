@@ -22,8 +22,9 @@ You can interact with three different AI personalities — each with their own c
 - **Talks to itself** — Multiple AI personalities that share info and have opinions about you
 - **Adapts to you** — Its personality shifts slightly based on how you treat it
 - **Accessible** — Built-in support for colorblind modes, day/night themes
-
-**Coming soon:** Can access your PC to help with tasks — open apps, search files, run commands, and more.
+- **PC Actions** — Toggle Action Mode to open apps, search files, run commands, and more
+- **Animated companions** — Interactive sprite characters that react to your messages with animations
+- **Beautiful UI** — Glassmorphism bento box design with customizable themes
 
 ---
 
@@ -77,6 +78,32 @@ You can pick which AI personality to chat with, or let it pick for you.
 - **Inter-AI communication** — The AIs talk to each other about you
 - **Accessibility** — Colorblind modes (Protanopia, Deuteranopia, Tritanopia)
 - **Day/night themes** — Auto-switches at 6am/6pm
+- **PC Actions** — Open apps, search files, run commands from within the app
+- **Interactive sprites** — Animated chibi characters that react to messages and can be dragged/poked
+- **Bento box UI** — Modern glassmorphism design with mood tracking and quick actions
+
+---
+
+## Coming Soon
+
+- **World awareness** — AI stays informed about news, weather, and trending topics
+- **Voice chat** — Talk to your companion naturally with voice input/output
+- **Memory detail view** — Tap the memory card to see specific facts and opinions
+- **Mobile companion** — iOS and Android apps to take your AI with you
+- **Tauri migration** — Switch from Electron to Tauri for better performance
+
+---
+
+## Planned Premium Features
+
+These features may become available through optional support/subscriptions:
+
+- **Cloud sync** — Back up your AI's memory and settings across devices
+- **Advanced customization** — Deeper personality tweaking and custom prompts
+- **Multi-device sync** — Seamless experience across PC and mobile
+- **Priority processing** — Faster response times during high server load
+- **Custom sprite packs** — Additional character designs and animations
+- **Export/import memories** — Full control over your data
 
 ---
 

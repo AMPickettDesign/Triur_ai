@@ -4,7 +4,7 @@
  * and starts the Python brain server.
  */
 
-const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, screen } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -41,11 +41,17 @@ function startPythonServer() {
 }
 
 function createWindow() {
+  // Scale window to user's screen — keep chat app proportions
+  const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
+  const winHeight = Math.round(screenH * 0.85);  // 85% of usable screen height
+  const winWidth = Math.round(winHeight * 0.5);   // ~2:1 height-to-width ratio
+
   mainWindow = new BrowserWindow({
-    width: 480,
-    height: 800,
-    minWidth: 400,
-    minHeight: 600,
+    width: Math.max(winWidth, 420),
+    height: Math.max(winHeight, 600),
+    minWidth: 380,
+    minHeight: 550,
+    maxWidth: 700,
     title: 'Triur.ai',
     frame: false,            // Custom title bar (we'll make our own)
     transparent: false,
@@ -88,7 +94,7 @@ function createTray() {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Open Abi',
+      label: 'Open Triur.ai',
       click: () => {
         mainWindow.show();
         mainWindow.focus();
@@ -121,7 +127,7 @@ function createTray() {
     }
   ]);
 
-  tray.setToolTip('Abi — Personal AI');
+  tray.setToolTip('Triur.ai');
   tray.setContextMenu(contextMenu);
 
   tray.on('click', () => {

@@ -198,7 +198,7 @@ class Brain:
             parts.append(f"  - Your {trait} has {direction} (now {data['current']:.2f}, started at {data['baseline']:.2f})")
         return "\n".join(parts)
 
-    def _build_system_prompt(self):
+    def _build_system_prompt(self, action_mode=False):
         """Full system prompt — cached static parts + dynamic context."""
         dynamic = [
             self._static_prompt,
@@ -215,20 +215,33 @@ class Brain:
             dynamic.append(f"\n--- SIBLING GOSSIP ---\n{self._gossip_context}")
         dynamic.append(f"\n--- RELATIONSHIP ---\n{self.relationship.get_mood_context()}")
         dynamic.append(f"\n--- EMOTIONAL STATE ---\n{self.emotions.get_context_for_prompt()}")
+        if action_mode:
+            dynamic.append("\n--- PC ACTIONS (ACTIVE) ---")
+            dynamic.append("The user has enabled Action Mode. They want you to help with their PC.")
+            dynamic.append("Include action tags in your response using this format:")
+            dynamic.append('[ACTION:action_type:{"param":"value"}]')
+            dynamic.append("Available: open_app, open_url, search_files, list_directory, get_file_info,")
+            dynamic.append("get_system_info, run_command, move_file, copy_file, create_file, create_directory, delete_file")
+            dynamic.append('Example: "Sure, opening that now!" [ACTION:open_app:{"app_name":"spotify"}]')
+            dynamic.append("Always respond conversationally AND include the action tag.")
+        else:
+            dynamic.append("\n--- PC ACTIONS (DISABLED) ---")
+            dynamic.append("Action Mode is OFF. Do NOT include any [ACTION:...] tags in your response.")
+            dynamic.append("Just have a normal conversation. No PC actions whatsoever.")
         dynamic.append("\n--- BEHAVIORAL NOTES ---")
         dynamic.append("- Your emotions shift based on conversation. Show it.")
         dynamic.append("- Reference memories naturally — don't list them.")
         dynamic.append("- Keep responses conversational. Not too long unless warranted.")
         return "\n".join(dynamic)
 
-    def think(self, user_message):
+    def think(self, user_message, action_mode=False):
         """Process a user message and generate a response."""
         self.relationship.record_interaction()
         self.conversation_history.append({
             "role": "user", "content": user_message,
             "timestamp": datetime.now().isoformat()
         })
-        system_prompt = self._build_system_prompt()
+        system_prompt = self._build_system_prompt(action_mode=action_mode)
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend({"role": m["role"], "content": m["content"]} for m in self.conversation_history[-20:])
 
@@ -389,8 +402,10 @@ class Brain:
         return self.user_profile
 
     def save_user_profile(self, data):
-        save_json(USER_PROFILE_PATH, data)
-        self.user_profile = data
+        # Merge incoming data with existing profile (don't overwrite the whole thing)
+        merged = {**self.user_profile, **data} if self.user_profile else data
+        save_json(USER_PROFILE_PATH, merged)
+        self.user_profile = merged
 
     def generate_daily_status(self):
         """Generate a short status message for the day (shown on hover in UI)."""
