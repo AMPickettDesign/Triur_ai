@@ -1,18 +1,29 @@
 # Triur_ai
 
-Three AI siblings with real personalities. They remember things, talk to each other, and reach out on their own.
+Your personal AI companion that actually grows with you.
 
 ---
 
 ## What is this?
 
-Triur_ai (Gaelic for "three") gives you three AI companions:
+Triur_ai (Gaelic for "three") is an AI that gets to know you over time. It's not just a chatbot you reset every session — it remembers you, learns your preferences, forms opinions about you, and evolves as a person through your conversations.
 
-- **Abi** — Sharp, direct, dry humor. Says what everyone's thinking.
-- **David** — Steady, calm, protective. The one who actually shows up.
-- **Quinn** — Chaotic, curious, texts at 3am with "okay hear me out."
+Think of it like having a digital companion that lives on your PC. It knows your name, your interests, your pets, what you like to talk about. And it actually *cares* (in an AI way) about your interactions.
 
-They're not chatbots. They have memories, opinions, feelings, and they'll start conversations with you unprompted. They talk to each other about you too.
+You can interact with three different AI personalities — each with their own character and way of talking. They're connected, so they gossip about you with each other.
+
+---
+
+## What it can do (currently)
+
+- **Remembers everything** — Tell it about yourself once, it remembers forever
+- **Learns your preferences** — It picks up on what you like and don't like
+- **Reaches out on its own** — Not just waiting for you to message — it'll check in when you've been quiet
+- **Talks to itself** — Multiple AI personalities that share info and have opinions about you
+- **Adapts to you** — Its personality shifts slightly based on how you treat it
+- **Accessible** — Built-in support for colorblind modes, day/night themes
+
+**Coming soon:** Can access your PC to help with tasks — open apps, search files, run commands, and more.
 
 ---
 
@@ -51,20 +62,20 @@ Before running, you need:
 
 ## First Run
 
-On first launch, you'll see an onboarding screen. It asks about you (name, interests, etc.) so the siblings know who they're talking to. This makes conversations feel more real from the start.
+On first launch, you'll see a setup screen. It asks about you — your name, interests, pets, what you like to talk about, what to avoid. This helps your AI companion get to know the real you from day one.
 
-You can pick which sibling to talk to, or let them decide.
+You can pick which AI personality to chat with, or let it pick for you.
 
 ---
 
 ## Features
 
-- **Multi-sibling system** — Switch between Abi, David, and Quinn anytime
-- **Real memory** — They remember what you tell them across sessions
-- **Self-initiated messaging** — They reach out unprompted when you're quiet
-- **Sibling gossip** — They talk to each other about you
-- **Adaptive personality** — Their personalities evolve based on your interactions
-- **Colorblind modes** — Protanopia, Deuteranopia, Tritanopia support
+- **Long-term memory** — Tell it things once, it remembers across sessions
+- **Adaptive personality** — The AI's personality shifts based on your interactions
+- **Self-initiated contact** — It'll message you when you've been quiet
+- **Multi-personality system** — Different AI characters with their own quirks
+- **Inter-AI communication** — The AIs talk to each other about you
+- **Accessibility** — Colorblind modes (Protanopia, Deuteranopia, Tritanopia)
 - **Day/night themes** — Auto-switches at 6am/6pm
 
 ---
