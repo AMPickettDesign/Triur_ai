@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sibling AI</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Custom title bar -->
+  <div id="titlebar">
+    <div class="titlebar-drag">
+      <span class="titlebar-title" id="titlebar-name">Abi</span>
+      <span class="titlebar-status" id="titlebar-status">waking up...</span>
+    </div>
+
+    <!-- Sibling Switcher -->
+    <div class="sibling-switcher" id="sibling-switcher">
+      <button class="sib-bubble active" data-sibling="abi" title="Abi">
+        <span class="sib-initial">A</span>
+        <span class="sib-indicator"></span>
+        <div class="sib-tooltip" id="tooltip-abi">...</div>
+      </button>
+      <button class="sib-bubble" data-sibling="david" title="David">
+        <span class="sib-initial">D</span>
+        <span class="sib-indicator"></span>
+        <div class="sib-tooltip" id="tooltip-david">...</div>
+      </button>
+      <button class="sib-bubble" data-sibling="quinn" title="Quinn">
+        <span class="sib-initial">Q</span>
+        <span class="sib-indicator"></span>
+        <div class="sib-tooltip" id="tooltip-quinn">...</div>
+      </button>
+    </div>
+
+    <div class="titlebar-buttons">
+      <button class="tb-btn settings" id="btn-settings" title="Settings">&#9881;</button>
+      <button class="tb-btn minimize" id="btn-minimize">&#9472;</button>
+      <button class="tb-btn maximize" id="btn-maximize">&#9633;</button>
+      <button class="tb-btn close" id="btn-close">&times;</button>
+    </div>
+  </div>
+
+  <!-- Main layout -->
+  <div id="main">
+
+    <!-- Chat area -->
+    <div id="chat-area">
+      <div id="avatar-space">
+        <div id="avatar-placeholder">
+          <div id="avatar-mood-indicator"></div>
+          <span id="avatar-label">A</span>
+        </div>
+        <div id="avatar-status">
+          <span id="mood-text">...</span>
+        </div>
+        <button id="end-chat-btn" title="End conversation and save">End Chat</button>
+      </div>
+
+      <div id="messages" role="log" aria-live="polite"></div>
+
+      <div id="gif-picker">
+        <input type="text" id="gif-search" placeholder="Search GIFs..." />
+        <div id="gif-results"></div>
+      </div>
+
+      <div id="input-area">
+        <textarea id="message-input" placeholder="Talk to Abi..." rows="1" autofocus></textarea>
+        <button id="gif-btn" title="Send a GIF">GIF</button>
+        <button id="send-btn" title="Send">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div class="widget" id="widget-mood">
+        <div class="widget-header">
+          <span class="widget-icon">&#9672;</span>
+          <span class="widget-title">Mood</span>
+        </div>
+        <div class="widget-content">
+          <div id="mood-dominant">...</div>
+          <div id="mood-energy-bar">
+            <div class="bar-label">Energy</div>
+            <div class="bar-track"><div class="bar-fill" id="energy-fill" style="width:50%"></div></div>
+          </div>
+          <div id="mood-emotions"></div>
+        </div>
+      </div>
+
+      <div class="widget" id="widget-relationship">
+        <div class="widget-header">
+          <span class="widget-icon">&#9825;</span>
+          <span class="widget-title">Feelings</span>
+        </div>
+        <div class="widget-content">
+          <div id="rel-opinion">...</div>
+          <div class="rel-meters">
+            <div class="rel-meter"><span class="rel-label">Trust</span><div class="bar-track"><div class="bar-fill rel-trust" style="width:50%"></div></div></div>
+            <div class="rel-meter"><span class="rel-label">Fondness</span><div class="bar-track"><div class="bar-fill rel-fondness" style="width:50%"></div></div></div>
+            <div class="rel-meter"><span class="rel-label">Respect</span><div class="bar-track"><div class="bar-fill rel-respect" style="width:50%"></div></div></div>
+            <div class="rel-meter"><span class="rel-label">Comfort</span><div class="bar-track"><div class="bar-fill rel-comfort" style="width:30%"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="widget" id="widget-memory">
+        <div class="widget-header">
+          <span class="widget-icon">&#10022;</span>
+          <span class="widget-title">Memory</span>
+        </div>
+        <div class="widget-content">
+          <div id="memory-stats">
+            <div class="mem-stat">Conversations: <span id="mem-convos">0</span></div>
+            <div class="mem-stat">Facts known: <span id="mem-facts">0</span></div>
+            <div class="mem-stat">Reflections: <span id="mem-journals">0</span></div>
+          </div>
+          <button id="memory-toggle-btn" class="memory-toggle">View Memories &#9662;</button>
+          <div id="memory-dropdown" class="memory-dropdown">
+            <div class="mem-section">
+              <div class="mem-section-header" data-section="facts">Facts &#9656;</div>
+              <div class="mem-section-content" id="mem-facts-list"></div>
+            </div>
+            <div class="mem-section">
+              <div class="mem-section-header" data-section="opinions">Opinions &#9656;</div>
+              <div class="mem-section-content" id="mem-opinions-list"></div>
+            </div>
+            <div class="mem-section">
+              <div class="mem-section-header" data-section="patterns">Patterns &#9656;</div>
+              <div class="mem-section-content" id="mem-patterns-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="widget" id="widget-time">
+        <div class="widget-header">
+          <span class="widget-icon">&#9719;</span>
+          <span class="widget-title">Time</span>
+        </div>
+        <div class="widget-content">
+          <div id="time-display">--:--</div>
+          <div id="date-display">...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onboarding Overlay (first run only) -->
+  <div id="onboarding-overlay" class="onboarding-overlay">
+    <div class="onboarding-container">
+
+      <!-- Step 1: Welcome -->
+      <div class="onboarding-step active" data-step="1">
+        <div class="onboarding-header">
+          <h1 class="onboarding-title">Sibling AI</h1>
+          <p class="onboarding-subtitle">Three siblings. Real personalities. Your call.</p>
+        </div>
+        <div class="onboarding-body">
+          <p class="onboarding-text">Before you meet them, let's get a few things out of the way so they know who they're talking to.</p>
+          <p class="onboarding-text muted">Everything here is optional. Skip what you want. But the more they know, the more real the conversations feel.</p>
+        </div>
+        <div class="onboarding-footer">
+          <span class="onboarding-step-dots">
+            <span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </span>
+          <button class="onboarding-btn primary" data-action="next">Let's go</button>
+        </div>
+      </div>
+
+      <!-- Step 2: The Basics -->
+      <div class="onboarding-step" data-step="2">
+        <div class="onboarding-header">
+          <h2 class="onboarding-title">The Basics</h2>
+          <p class="onboarding-subtitle">What should they call you?</p>
+        </div>
+        <div class="onboarding-body">
+          <div class="onboarding-field">
+            <label for="ob-name">Your Name</label>
+            <input type="text" id="ob-name" placeholder="Whatever you go by" />
+          </div>
+          <div class="onboarding-field">
+            <label for="ob-pronouns">Pronouns</label>
+            <select id="ob-pronouns">
+              <option value="">Skip</option>
+              <option value="she/her">she/her</option>
+              <option value="he/him">he/him</option>
+              <option value="they/them">they/them</option>
+              <option value="custom">other (tell them in About Me later)</option>
+            </select>
+          </div>
+          <div class="onboarding-field">
+            <label for="ob-birthday">Birthday</label>
+            <input type="text" id="ob-birthday" placeholder="e.g. July 9th" />
+          </div>
+        </div>
+        <div class="onboarding-footer">
+          <span class="onboarding-step-dots">
+            <span class="dot"></span><span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </span>
+          <div class="onboarding-nav">
+            <button class="onboarding-btn secondary" data-action="back">Back</button>
+            <button class="onboarding-btn primary" data-action="next">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: About You -->
+      <div class="onboarding-step" data-step="3">
+        <div class="onboarding-header">
+          <h2 class="onboarding-title">About You</h2>
+          <p class="onboarding-subtitle">Give them something to work with.</p>
+        </div>
+        <div class="onboarding-body">
+          <div class="onboarding-field">
+            <label for="ob-about">Who are you? What's your life like right now?</label>
+            <textarea id="ob-about" rows="4" placeholder="Whatever you feel like sharing..."></textarea>
+          </div>
+          <div class="onboarding-field">
+            <label for="ob-interests">Interests &amp; Hobbies</label>
+            <textarea id="ob-interests" rows="3" placeholder="Gaming, art, music, whatever you're into..."></textarea>
+          </div>
+          <div class="onboarding-field">
+            <label for="ob-pets">Pets?</label>
+            <textarea id="ob-pets" rows="2" placeholder="Names, ages, quirks... they'll remember"></textarea>
+          </div>
+        </div>
+        <div class="onboarding-footer">
+          <span class="onboarding-step-dots">
+            <span class="dot"></span><span class="dot"></span><span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </span>
+          <div class="onboarding-nav">
+            <button class="onboarding-btn secondary" data-action="back">Back</button>
+            <button class="onboarding-btn primary" data-action="next">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Your People & Boundaries -->
+      <div class="onboarding-step" data-step="4">
+        <div class="onboarding-header">
+          <h2 class="onboarding-title">Your People &amp; Boundaries</h2>
+          <p class="onboarding-subtitle">Who matters to you? Anything off-limits?</p>
+        </div>
+        <div class="onboarding-body">
+          <div class="onboarding-field">
+            <label for="ob-people">Important People</label>
+            <textarea id="ob-people" rows="3" placeholder="Partner, family, friends... whoever you want them to know about"></textarea>
+          </div>
+          <div class="onboarding-field">
+            <label for="ob-avoid">Topics to Avoid</label>
+            <textarea id="ob-avoid" rows="2" placeholder="Anything you don't want brought up. They'll respect it."></textarea>
+          </div>
+          <div class="onboarding-field">
+            <label for="ob-notes">Anything Else?</label>
+            <textarea id="ob-notes" rows="2" placeholder="Anything else you want them to know going in..."></textarea>
+          </div>
+        </div>
+        <div class="onboarding-footer">
+          <span class="onboarding-step-dots">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+          </span>
+          <div class="onboarding-nav">
+            <button class="onboarding-btn secondary" data-action="back">Back</button>
+            <button class="onboarding-btn primary" data-action="next">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Accessibility -->
+      <div class="onboarding-step" data-step="5">
+        <div class="onboarding-header">
+          <h2 class="onboarding-title">Accessibility</h2>
+          <p class="onboarding-subtitle">Make it work for you.</p>
+        </div>
+        <div class="onboarding-body">
+          <div class="onboarding-field">
+            <label for="ob-comm-style">Communication Style</label>
+            <p class="onboarding-hint">How do you want them to talk to you?</p>
+            <select id="ob-comm-style">
+              <option value="casual">Casual &amp; chill</option>
+              <option value="balanced">Balanced</option>
+              <option value="formal">More formal</option>
+            </select>
+          </div>
+          <div class="onboarding-field">
+            <label>Colorblind Mode</label>
+            <p class="onboarding-hint">Adjusts all colors across the app. You can change this later in Settings.</p>
+            <div class="onboarding-radio-group" id="ob-colorblind">
+              <label class="onboarding-radio">
+                <input type="radio" name="colorblind" value="none" checked />
+                <span class="radio-label">None</span>
+              </label>
+              <label class="onboarding-radio">
+                <input type="radio" name="colorblind" value="protanopia" />
+                <span class="radio-label">Protanopia</span>
+                <span class="radio-desc">Red-blind &mdash; reds appear dark/muted</span>
+              </label>
+              <label class="onboarding-radio">
+                <input type="radio" name="colorblind" value="deuteranopia" />
+                <span class="radio-label">Deuteranopia</span>
+                <span class="radio-desc">Green-blind &mdash; greens and reds blend together</span>
+              </label>
+              <label class="onboarding-radio">
+                <input type="radio" name="colorblind" value="tritanopia" />
+                <span class="radio-label">Tritanopia</span>
+                <span class="radio-desc">Blue-blind &mdash; blues and yellows are hard to tell apart</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="onboarding-footer">
+          <span class="onboarding-step-dots">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot active"></span><span class="dot"></span>
+          </span>
+          <div class="onboarding-nav">
+            <button class="onboarding-btn secondary" data-action="back">Back</button>
+            <button class="onboarding-btn primary" data-action="next">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Meet the Siblings -->
+      <div class="onboarding-step" data-step="6">
+        <div class="onboarding-header">
+          <h2 class="onboarding-title">Meet the Siblings</h2>
+          <p class="onboarding-subtitle">Pick who you want to talk to first. Or don't.</p>
+        </div>
+        <div class="onboarding-body">
+          <div class="onboarding-sibling-cards">
+            <button class="sibling-card" data-sibling="abi">
+              <div class="sibling-card-avatar abi">A</div>
+              <div class="sibling-card-info">
+                <span class="sibling-card-name">Abi</span>
+                <span class="sibling-card-desc">Sharp. Direct. Dry humor. Says what everyone else is thinking.</span>
+              </div>
+            </button>
+            <button class="sibling-card" data-sibling="david">
+              <div class="sibling-card-avatar david">D</div>
+              <div class="sibling-card-info">
+                <span class="sibling-card-name">David</span>
+                <span class="sibling-card-desc">Steady. Calm. Protective. The one who actually shows up.</span>
+              </div>
+            </button>
+            <button class="sibling-card" data-sibling="quinn">
+              <div class="sibling-card-avatar quinn">Q</div>
+              <div class="sibling-card-info">
+                <span class="sibling-card-name">Quinn</span>
+                <span class="sibling-card-desc">Chaotic. Curious. Texts at 3am with "okay hear me out."</span>
+              </div>
+            </button>
+            <button class="sibling-card surprise" data-sibling="random">
+              <div class="sibling-card-avatar random">?</div>
+              <div class="sibling-card-info">
+                <span class="sibling-card-name">Choose for me</span>
+                <span class="sibling-card-desc">Let fate decide. One of them will reach out first.</span>
+              </div>
+            </button>
+          </div>
+        </div>
+        <div class="onboarding-footer">
+          <span class="onboarding-step-dots">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot active"></span>
+          </span>
+          <div class="onboarding-nav">
+            <button class="onboarding-btn secondary" data-action="back">Back</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-overlay" class="settings-overlay">
+    <div class="settings-modal">
+      <div class="settings-header">
+        <h2 class="settings-title">Settings</h2>
+        <button id="settings-close" class="settings-close-btn" title="Close">&times;</button>
+      </div>
+
+      <div class="settings-body">
+        <!-- Profile Section -->
+        <div class="settings-section">
+          <h3 class="settings-section-title">Your Profile</h3>
+          <p class="settings-section-desc">Tell the siblings about yourself. This info helps them understand you from the start.</p>
+          <div class="settings-field"><label for="profile-name">Display Name</label><input type="text" id="profile-name" placeholder="What should they call you?" /></div>
+          <div class="settings-field"><label for="profile-pronouns">Pronouns</label>
+            <select id="profile-pronouns"><option value="">Choose...</option><option value="she/her">she/her</option><option value="he/him">he/him</option><option value="they/them">they/them</option><option value="custom">custom (type in About Me)</option></select>
+          </div>
+          <div class="settings-field"><label for="profile-birthday">Birthday</label><input type="text" id="profile-birthday" placeholder="e.g. July 9th" /></div>
+          <div class="settings-field"><label for="profile-about">About Me</label><textarea id="profile-about" rows="4" placeholder="Who are you? What's going on in your life?"></textarea></div>
+          <div class="settings-field"><label for="profile-interests">Interests &amp; Hobbies</label><textarea id="profile-interests" rows="3" placeholder="Gaming, art, music..."></textarea></div>
+          <div class="settings-field"><label for="profile-pets">Pets</label><textarea id="profile-pets" rows="2" placeholder="Names, ages, quirks..."></textarea></div>
+          <div class="settings-field"><label for="profile-people">Important People</label><textarea id="profile-people" rows="2" placeholder="Partner, family, friends..."></textarea></div>
+          <div class="settings-field"><label for="profile-comm-style">Communication Style</label>
+            <select id="profile-comm-style"><option value="casual">Casual &amp; chill</option><option value="balanced">Balanced</option><option value="formal">More formal</option></select>
+          </div>
+          <div class="settings-field"><label for="profile-avoid">Topics to Avoid</label><textarea id="profile-avoid" rows="2" placeholder="Anything you don't want brought up..."></textarea></div>
+          <div class="settings-field"><label for="profile-notes">Anything Else</label><textarea id="profile-notes" rows="3" placeholder="Anything else you want them to know..."></textarea></div>
+        </div>
+
+        <!-- Accessibility Section -->
+        <div class="settings-section">
+          <h3 class="settings-section-title">Accessibility</h3>
+          <p class="settings-section-desc">Adjust how the app looks and feels for you.</p>
+          <div class="settings-field">
+            <label for="profile-colorblind">Colorblind Mode</label>
+            <select id="profile-colorblind">
+              <option value="none">None</option>
+              <option value="protanopia">Protanopia (red-blind)</option>
+              <option value="deuteranopia">Deuteranopia (green-blind)</option>
+              <option value="tritanopia">Tritanopia (blue-blind)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Reset Section -->
+        <div class="settings-section">
+          <h3 class="settings-section-title">Sibling Resets</h3>
+          <p class="settings-section-desc">Reset a sibling's memory or personality. This can't be undone.</p>
+
+          <div class="reset-group" data-sibling="abi">
+            <div class="reset-label">Abi</div>
+            <div class="reset-buttons">
+              <button class="reset-btn memory-wipe" data-type="memory" data-sibling="abi">Wipe Memory</button>
+              <button class="reset-btn personality-reset" data-type="personality" data-sibling="abi">Reset Personality</button>
+              <button class="reset-btn full-reset" data-type="full" data-sibling="abi">Full Reset</button>
+            </div>
+          </div>
+          <div class="reset-group" data-sibling="david">
+            <div class="reset-label">David</div>
+            <div class="reset-buttons">
+              <button class="reset-btn memory-wipe" data-type="memory" data-sibling="david">Wipe Memory</button>
+              <button class="reset-btn personality-reset" data-type="personality" data-sibling="david">Reset Personality</button>
+              <button class="reset-btn full-reset" data-type="full" data-sibling="david">Full Reset</button>
+            </div>
+          </div>
+          <div class="reset-group" data-sibling="quinn">
+            <div class="reset-label">Quinn</div>
+            <div class="reset-buttons">
+              <button class="reset-btn memory-wipe" data-type="memory" data-sibling="quinn">Wipe Memory</button>
+              <button class="reset-btn personality-reset" data-type="personality" data-sibling="quinn">Reset Personality</button>
+              <button class="reset-btn full-reset" data-type="full" data-sibling="quinn">Full Reset</button>
+            </div>
+          </div>
+          <span id="reset-status" class="settings-status"></span>
+        </div>
+      </div>
+
+      <div class="settings-footer">
+        <button id="settings-save" class="settings-save-btn">Save Profile</button>
+        <span id="settings-status" class="settings-status"></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

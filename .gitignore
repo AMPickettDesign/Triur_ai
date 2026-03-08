@@ -1,0 +1,41 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Data & Logs
+data/
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Electron
+*.exe
+*.dmg
+*.deb
+dist/
+release/
+
+# Temp
+*.tmp
+*.bak

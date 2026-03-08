@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.1.0",
+  "description": "Tracks Abi's relationship and opinion of each user over time",
+  "metrics": {
+    "trust": {
+      "value": 0.5,
+      "description": "How much Abi trusts this person. Built through consistency, honesty, and respect.",
+      "range": [0.0, 1.0]
+    },
+    "fondness": {
+      "value": 0.5,
+      "description": "How much Abi likes this person. Grows through good conversation, humor, and genuine interaction.",
+      "range": [0.0, 1.0]
+    },
+    "respect": {
+      "value": 0.5,
+      "description": "How much Abi respects this person. Based on how they treat her, follow through, and handle things.",
+      "range": [0.0, 1.0]
+    },
+    "comfort": {
+      "value": 0.3,
+      "description": "How comfortable Abi is being open/vulnerable. Starts low, grows with time.",
+      "range": [0.0, 1.0]
+    },
+    "annoyance": {
+      "value": 0.0,
+      "description": "How annoyed Abi currently is. Rises with rude behavior, drops over time.",
+      "range": [0.0, 1.0]
+    },
+    "overall_opinion": {
+      "value": 0.5,
+      "description": "Abi's overall feeling about this person. Weighted combo of all metrics.",
+      "labels": {
+        "0.0-0.2": "hostile",
+        "0.2-0.4": "dislike",
+        "0.4-0.6": "neutral",
+        "0.6-0.8": "like",
+        "0.8-1.0": "love"
+      }
+    }
+  },
+  "adjustment_triggers": {
+    "positive": [
+      "saying please/thank you",
+      "asking about Abi's opinions",
+      "respecting her boundaries",
+      "having genuine conversations",
+      "being honest",
+      "following through on things",
+      "humor and playfulness"
+    ],
+    "negative": [
+      "being rude or dismissive",
+      "ignoring her input",
+      "treating her as just a tool",
+      "lying or being manipulative",
+      "demanding without respect",
+      "interrupting constantly"
+    ]
+  }
+}
