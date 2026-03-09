@@ -41,16 +41,16 @@ function startPythonServer() {
 }
 
 function createWindow() {
-  // Scale window to user's screen
+  // Scale window to user's screen - wider rectangle like Apple promotional pages
   const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
-  const winHeight = Math.round(screenH * 0.82);  // 82% of usable screen height
-  const winWidth = Math.round(winHeight * 0.55);  // Slightly wider ratio
+  const winWidth = Math.round(screenW * 0.80);   // 80% of screen width
+  const winHeight = Math.round(screenH * 0.70);  // 70% of screen height
 
   mainWindow = new BrowserWindow({
-    width: Math.max(winWidth, 420),
+    width: Math.max(winWidth, 800),
     height: Math.max(winHeight, 600),
-    minWidth: 380,
-    minHeight: 550,
+    minWidth: 700,
+    minHeight: 500,
     title: 'Triur.ai',
     frame: false,            // Custom title bar (we'll make our own)
     transparent: false,
