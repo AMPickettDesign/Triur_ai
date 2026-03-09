@@ -38,19 +38,19 @@
 
 /* ─── Abi Night ─── */
 body.nighttime {
-  --bg-base: #19140F;
-  --bg-gradient: linear-gradient(160deg, #1A1210 0%, #251A18 40%, #1E2018 80%, #19140F 100%);
-  --card-bg: rgba(46,38,32,0.7);
-  --card-bg-solid: #2E2620;
-  --card-border: rgba(255,255,255,0.06);
-  --card-shadow: 0 2px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04);
-  --card-shadow-hover: 0 6px 24px rgba(0,0,0,0.4);
-  --inset-shadow: inset 0 2px 8px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.04);
-  --text-1: #FFFFFF; --text-2: #A3AF9E; --text-3: #7A8070;
-  --text-accent: #CE6577;
-  --bubble-user: rgba(145,63,77,0.88); --bubble-ai: rgba(46,38,32,0.82);
-  --bubble-user-text: #FFFFFF; --bubble-ai-text: #FFFFFF;
-  --border: rgba(163,175,158,0.1);
+  --bg-base: #1A1A1F;
+  --bg-gradient: linear-gradient(160deg, #1C1C22 0%, #222228 40%, #1E1E24 80%, #1A1A1F 100%);
+  --card-bg: rgba(40,40,48,0.75);
+  --card-bg-solid: #2A2A32;
+  --card-border: rgba(255,255,255,0.08);
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
+  --card-shadow-hover: 0 6px 24px rgba(0,0,0,0.5);
+  --inset-shadow: inset 0 2px 8px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.03);
+  --text-1: #E0E0E0; --text-2: #989898; --text-3: #6A6A6A;
+  --text-accent: #D67A8A;
+  --bubble-user: rgba(145,63,77,0.88); --bubble-ai: rgba(40,40,48,0.9);
+  --bubble-user-text: #E0E0E0; --bubble-ai-text: #E0E0E0;
+  --border: rgba(255,255,255,0.08);
 }
 
 /* ─── David Theme — Sea & Storm ─── */
@@ -72,17 +72,17 @@ body.theme-david {
   --sib-gradient: linear-gradient(135deg, #2B5F8A, #7A8FA6);
 }
 body.theme-david.nighttime {
-  --bg-base: #0E1A24;
-  --bg-gradient: linear-gradient(160deg, #0B1620 0%, #122030 40%, #162838 80%, #0E1A24 100%);
-  --card-bg: rgba(30,50,69,0.7); --card-bg-solid: #1E3245;
-  --card-border: rgba(255,255,255,0.05);
-  --card-shadow: 0 2px 12px rgba(0,0,0,0.35); --card-shadow-hover: 0 6px 24px rgba(0,0,0,0.45);
-  --inset-shadow: inset 0 2px 8px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04);
-  --text-1: #E4EBF2; --text-2: #8EA4B8; --text-3: #5E7488;
-  --text-accent: #6BAAD4;
-  --bubble-user: rgba(30,74,110,0.88); --bubble-ai: rgba(30,50,69,0.82);
-  --bubble-user-text: #E4EBF2; --bubble-ai-text: #E4EBF2;
-  --border: rgba(107,170,212,0.1);
+  --bg-base: #141820;
+  --bg-gradient: linear-gradient(160deg, #181C24 0%, #1C242E 40%, #1A2028 80%, #141820 100%);
+  --card-bg: rgba(30,40,52,0.75); --card-bg-solid: #222B38;
+  --card-border: rgba(255,255,255,0.07);
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.4); --card-shadow-hover: 0 6px 24px rgba(0,0,0,0.5);
+  --inset-shadow: inset 0 2px 8px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.03);
+  --text-1: #D8DDE4; --text-2: #8A96A6; --text-3: #5A6670;
+  --text-accent: #7AB0D8;
+  --bubble-user: rgba(30,74,110,0.88); --bubble-ai: rgba(30,40,52,0.9);
+  --bubble-user-text: #D8DDE4; --bubble-ai-text: #D8DDE4;
+  --border: rgba(122,176,216,0.1);
 }
 
 /* ─── Quinn Theme — Ember & Plum ─── */
@@ -104,17 +104,17 @@ body.theme-quinn {
   --sib-gradient: linear-gradient(135deg, #6B2D5B, #D4963A);
 }
 body.theme-quinn.nighttime {
-  --bg-base: #1C1018;
-  --bg-gradient: linear-gradient(160deg, #1A0E16 0%, #241620 40%, #201418 80%, #1C1018 100%);
-  --card-bg: rgba(44,30,40,0.7); --card-bg-solid: #2C1E28;
-  --card-border: rgba(255,255,255,0.05);
-  --card-shadow: 0 2px 12px rgba(0,0,0,0.35); --card-shadow-hover: 0 6px 24px rgba(0,0,0,0.45);
-  --inset-shadow: inset 0 2px 8px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04);
-  --text-1: #F2E4D8; --text-2: #B8A0AC; --text-3: #806878;
-  --text-accent: #C87AAE;
-  --bubble-user: rgba(90,40,72,0.88); --bubble-ai: rgba(44,30,40,0.82);
-  --bubble-user-text: #F2E4D8; --bubble-ai-text: #F2E4D8;
-  --border: rgba(200,122,174,0.1);
+  --bg-base: #181218;
+  --bg-gradient: linear-gradient(160deg, #1C141C 0%, #241C24 40%, #1C1820 80%, #181218 100%);
+  --card-bg: rgba(40,32,40,0.75); --card-bg-solid: #2A2230;
+  --card-border: rgba(255,255,255,0.07);
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.4); --card-shadow-hover: 0 6px 24px rgba(0,0,0,0.5);
+  --inset-shadow: inset 0 2px 8px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.03);
+  --text-1: #E0D8E0; --text-2: #A098A8; --text-3: #706878;
+  --text-accent: #C080B8;
+  --bubble-user: rgba(90,40,72,0.88); --bubble-ai: rgba(40,32,40,0.9);
+  --bubble-user-text: #E0D8E0; --bubble-ai-text: #E0D8E0;
+  --border: rgba(192,128,184,0.1);
 }
 
 /* ─── Colorblind Modes ─── */
