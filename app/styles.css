@@ -493,6 +493,7 @@ body {
 .rel-fondness { background: var(--accent); }
 .rel-respect { background: var(--accent-2); }
 .rel-comfort { background: var(--accent-warm); }
+.rel-curiosity { background: linear-gradient(90deg, var(--accent-warm), var(--accent)); }
 
 /* ─── Emotion Tags ─── */
 #mood-emotions { display: flex; flex-wrap: wrap; gap: 2px; }

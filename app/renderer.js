@@ -291,10 +291,18 @@ const MOOD_EMOJIS = {
   bored: '\uD83D\uDE34', tired: '\uD83D\uDE29', confused: '\uD83D\uDE15', surprised: '\uD83D\uDE32',
 };
 
+// Map emotion names to display-friendly text (for grammatical "Feeling X")
+const MOOD_DISPLAY = {
+  curiosity: 'Curious', happiness: 'Happy', frustration: 'Frustrated',
+  sadness: 'Sad', anger: 'Angry', anxiety: 'Anxious', excitement: 'Excited',
+  boredom: 'Bored', confusion: 'Confused', surprise: 'Surprised',
+};
+
 function updateSidebar(data) {
   if (data.dominant_emotion) {
-    if (moodDominant) moodDominant.textContent = data.dominant_emotion;
-    if (moodText) moodText.textContent = `Feeling ${data.dominant_emotion}`;
+    const displayName = MOOD_DISPLAY[data.dominant_emotion.toLowerCase()] || data.dominant_emotion;
+    if (moodDominant) moodDominant.textContent = displayName;
+    if (moodText) moodText.textContent = `Feeling ${displayName}`;
     const emojiEl = $('mood-bar-emoji');
     if (emojiEl) {
       const key = data.dominant_emotion.toLowerCase();
@@ -313,7 +321,8 @@ function updateSidebar(data) {
       .forEach(([name, val]) => {
         const tag = document.createElement('span');
         tag.className = `emotion-tag${val > 0.5 ? ' high' : ''}`;
-        tag.textContent = `${name} ${(val * 100).toFixed(0)}%`;
+        const displayTag = MOOD_DISPLAY[name.toLowerCase()] || name;
+        tag.textContent = `${displayTag} ${(val * 100).toFixed(0)}%`;
         moodEmotions.appendChild(tag);
       });
   }
@@ -329,6 +338,7 @@ function updateSidebar(data) {
     const setBar = (sel, val) => { const el = document.querySelector(sel); if (el) el.style.width = `${val * 100}%`; };
     setBar('.rel-trust', d.trust); setBar('.rel-fondness', d.fondness);
     setBar('.rel-respect', d.respect); setBar('.rel-comfort', d.comfort);
+    setBar('.rel-curiosity', d.curiosity || 0.5);
   }
 }
 
@@ -404,7 +414,7 @@ async function switchSibling(newId) {
   if (greeting) {
     addSystemMessage(`Conversation #${greeting.conversation_number} | ${greeting.time_of_day}`);
     addMessage(greeting.greeting, newId);
-    moodText.textContent = `Feeling ${greeting.mood_hint}`;
+    moodText.textContent = `Feeling ${MOOD_DISPLAY[(greeting.mood_hint || '').toLowerCase()] || greeting.mood_hint}`;
   }
   await refreshStatus();
   // Restart nudge polling for new sibling
@@ -1253,7 +1263,7 @@ async function boot() {
   if (greeting) {
     addSystemMessage(`Conversation #${greeting.conversation_number} | ${greeting.time_of_day}`);
     addMessage(greeting.greeting, activeSibling);
-    moodText.textContent = `Feeling ${greeting.mood_hint}`;
+    moodText.textContent = `Feeling ${MOOD_DISPLAY[(greeting.mood_hint || '').toLowerCase()] || greeting.mood_hint}`;
   }
 
   await refreshStatus();
