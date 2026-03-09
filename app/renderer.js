@@ -377,6 +377,11 @@ async function switchSibling(newId) {
   if (spriteAssignments[newId]) {
     await loadSpriteCharacter(spriteAssignments[newId]);
   }
+  // Reset sprite position to center when switching
+  if (spriteCanvas) {
+    spriteCanvas.style.transition = 'left 0.3s ease';
+    spriteCanvas.style.left = 'calc(50% - 90px)';
+  }
   inputEl.placeholder = actionMode
     ? `Ask ${name} to do something on your PC...`
     : `Talk to ${name}...`;
