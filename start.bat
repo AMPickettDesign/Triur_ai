@@ -90,10 +90,10 @@ if not exist "venv\Scripts\python.exe" (
     python -m venv venv
 )
 echo   Installing Flask and dependencies...
-call venv\Scripts\pip.exe install -r requirements.txt -q
+call venv\Scripts\python.exe -m pip install -r requirements.txt -q
 if errorlevel 1 (
     echo.
-: Failed to install    echo   ERROR Python dependencies.
+    echo   ERROR: Failed to install Python dependencies.
     echo   Please run: pip install -r requirements.txt
     echo.
     pause
