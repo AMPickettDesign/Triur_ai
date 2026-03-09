@@ -474,10 +474,10 @@ body {
 #sprite-canvas {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  width: 120px; height: 120px;
+  width: 180px; height: 180px;
   position: absolute;
   bottom: 10px;
-  left: calc(50% - 60px);
+  left: calc(50% - 90px);
   transition: left 0.5s ease, transform 0.3s ease;
   cursor: grab;
   pointer-events: auto;

@@ -1106,7 +1106,7 @@ function initSpriteInteractions() {
       // Move sprite horizontally within the sprite area
       const areaRect = area.getBoundingClientRect();
       let newLeft = me.clientX - areaRect.left - dragOffsetX;
-      newLeft = Math.max(0, Math.min(newLeft, areaRect.width - 120));
+      newLeft = Math.max(0, Math.min(newLeft, areaRect.width - 180));
 
       // Flip based on movement direction
       const currentLeft = spriteCanvas.offsetLeft;
@@ -1130,7 +1130,7 @@ function initSpriteInteractions() {
         
         // Animate falling back to center
         spriteCanvas.style.transition = 'left 0.4s ease-out, transform 0.3s ease';
-        spriteCanvas.style.left = 'calc(50% - 60px)';
+        spriteCanvas.style.left = 'calc(50% - 90px)';
         
         // Play Jump/fall animation during return, then Idle
         setSpriteAnimation('Jump', true);
