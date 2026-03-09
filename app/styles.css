@@ -151,7 +151,7 @@ body {
   position: relative; z-index: 80;
 }
 .titlebar-drag { display: flex; align-items: center; gap: 10px; flex: 1; }
-.titlebar-title { font-weight: 700; font-size: 14px; color: var(--accent); letter-spacing: 0.3px; }
+.titlebar-title { font-weight: 700; font-size: 14px; color: var(--accent); letter-spacing: 0.3px; position: absolute; left: 50%; transform: translateX(-50%); opacity: 0; }
 .titlebar-status { font-size: 11px; color: var(--text-3); font-style: italic; }
 .titlebar-buttons { display: flex; gap: 4px; -webkit-app-region: no-drag; }
 .tb-btn { 
@@ -174,9 +174,21 @@ body {
 .tb-btn.close:hover { background: var(--accent); color: white; }
 
 /* ─── Sibling Switcher ─── */
-.sibling-switcher { display: flex; gap: 8px; -webkit-app-region: no-drag; margin: 0 12px; position: relative; z-index: 60; }
+.sibling-switcher { 
+  display: flex; 
+  gap: 28px; 
+  -webkit-app-region: no-drag; 
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60; 
+  padding: 12px 40px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(8px);
+  border-radius: 30px;
+}
 .sib-bubble { 
-  width: 34px; height: 34px; 
+  width: 44px; height: 44px; 
   border-radius: 50%; 
   border: 2px solid var(--border); 
   background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
@@ -189,6 +201,8 @@ body {
   position: relative; 
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
   padding: 0; 
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .sib-bubble:hover { 
@@ -277,6 +291,9 @@ body {
   flex: 0 0 auto;
 }
 .widgets-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bento-gap);
   flex: 1;
 }
 
@@ -596,41 +613,42 @@ body {
 }
 .bento-stat-num { font-weight: 700; color: var(--text-accent); font-size: 14px; }
 
-/* Memory/Personality Tabs */
+/* Memory/Personality Tabs - Pill buttons at bottom */
 .memory-tabs {
   display: flex;
-  gap: 4px;
-  padding: 6px;
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: var(--r-md);
-  border: 1px solid var(--card-border);
+  gap: 8px;
+  padding: 8px;
+  background: transparent;
+  border-radius: var(--r-pill);
+  border: none;
+  margin-top: 8px;
 }
 .memory-tab {
   flex: 1;
-  padding: 8px 10px;
-  border: none;
-  background: transparent;
-  color: var(--text-3);
-  font-size: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-2);
+  font-size: 12px;
   font-weight: 600;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-pill);
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: var(--font);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 .memory-tab:hover {
   color: var(--text-1);
-  background: rgba(255,255,255,0.15);
+  background: var(--card-bg-solid);
+  border-color: var(--accent);
+  transform: scale(1.02);
 }
 .memory-tab.active {
-  background: var(--card-bg-solid);
-  color: var(--text-1);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(199,95,113,0.3);
 }
 
 /* Personality Card */
