@@ -42,3 +42,7 @@ resources/python/
 # Temp
 *.tmp
 *.bak
+
+# PyInstaller
+build/pyinstaller-work/
+*.spec.bak

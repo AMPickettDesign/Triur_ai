@@ -13,7 +13,7 @@ const http = require('http');
 let mainWindow = null;
 let splashWindow = null;
 let tray = null;
-let pythonProcess = null;
+let serverProcess = null;
 let ollamaProcess = null;
 
 // ─── Platform Detection ───
@@ -279,9 +279,6 @@ function installOllama(installerPath) {
 // ─── Start Python server ───
 function startPythonServer() {
   console.log('[Triur.ai] Starting Python brain server...');
-  console.log('[Triur.ai] Python:', PYTHON_EXE);
-  console.log('[Triur.ai] Script:', SERVER_SCRIPT);
-  console.log('[Triur.ai] CWD:', SERVER_CWD);
 
   // Set config path for packaged mode
   const env = { ...process.env };
@@ -290,20 +287,54 @@ function startPythonServer() {
     env.TRIUR_DATA_DIR = path.join(app.getPath('userData'), 'data');
   }
 
-  const spawnOpts = { cwd: SERVER_CWD, env: env };
-  if (IS_WIN) spawnOpts.windowsHide = true;
+  const isDev = !app.isPackaged;
 
-  pythonProcess = spawn(PYTHON_EXE, [SERVER_SCRIPT], spawnOpts);
+  if (isDev) {
+    // Development — run Python directly
+    console.log('[Triur.ai] Mode: Development (Python)');
+    console.log('[Triur.ai] Python:', PYTHON_EXE);
+    console.log('[Triur.ai] Script:', SERVER_SCRIPT);
+    console.log('[Triur.ai] CWD:', SERVER_CWD);
 
-  pythonProcess.stdout.on('data', (data) => {
+    const spawnOpts = { cwd: SERVER_CWD, env: env, stdio: 'pipe' };
+    if (IS_WIN) spawnOpts.windowsHide = true;
+
+    serverProcess = spawn(PYTHON_EXE, [SERVER_SCRIPT], spawnOpts);
+  } else {
+    // Production — use bundled executable
+    const exeName = IS_WIN ? 'triur-brain.exe' : 'triur-brain';
+    const exePath = path.join(process.resourcesPath, 'triur-brain', exeName);
+
+    if (fs.existsSync(exePath)) {
+      console.log('[Triur.ai] Mode: Production (bundled executable)');
+      console.log('[Triur.ai] Executable:', exePath);
+
+      const spawnOpts = { cwd: path.dirname(exePath), env: env, stdio: 'pipe' };
+      if (IS_WIN) spawnOpts.windowsHide = true;
+
+      serverProcess = spawn(exePath, [], spawnOpts);
+    } else {
+      // Fallback to Python if executable not found
+      console.log('[Triur.ai] Mode: Production fallback (Python)');
+      console.log('[Triur.ai] Bundled exe not found at:', exePath);
+      console.log('[Triur.ai] Falling back to Python:', PYTHON_EXE);
+
+      const spawnOpts = { cwd: SERVER_CWD, env: env, stdio: 'pipe' };
+      if (IS_WIN) spawnOpts.windowsHide = true;
+
+      serverProcess = spawn(PYTHON_EXE, [SERVER_SCRIPT], spawnOpts);
+    }
+  }
+
+  serverProcess.stdout.on('data', (data) => {
     console.log(`[Brain] ${data.toString().trim()}`);
   });
 
-  pythonProcess.stderr.on('data', (data) => {
+  serverProcess.stderr.on('data', (data) => {
     console.log(`[Brain Err] ${data.toString().trim()}`);
   });
 
-  pythonProcess.on('close', (code) => {
+  serverProcess.on('close', (code) => {
     console.log(`[Brain] Exited with code ${code}`);
   });
 }
@@ -454,7 +485,7 @@ function createTray() {
 
 // ─── Cleanup processes ───
 function cleanup() {
-  if (pythonProcess) { try { pythonProcess.kill(); } catch (e) {} pythonProcess = null; }
+  if (serverProcess) { try { serverProcess.kill(); } catch (e) {} serverProcess = null; }
   // Don't kill Ollama — it may be shared with other apps
 }
 
