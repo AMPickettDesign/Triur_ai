@@ -7,8 +7,18 @@ import json
 import os
 
 # ─── Paths ───
-ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
-CONFIG_DIR = os.path.join(ROOT_DIR, "config")
+# PyInstaller sets sys._MEIPASS to the _internal/ temp dir.
+# In dev, ROOT_DIR is the repo root (parent of src/).
+# In production, ROOT_DIR is the triur-brain/ directory (parent of _internal/).
+import sys
+if getattr(sys, 'frozen', False):
+    # Running as PyInstaller bundle
+    _BUNDLE_DIR = sys._MEIPASS  # e.g. triur-brain/_internal/
+    ROOT_DIR = os.path.dirname(_BUNDLE_DIR)  # e.g. triur-brain/
+    CONFIG_DIR = os.path.join(_BUNDLE_DIR, "config")  # config is inside _internal/
+else:
+    ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+    CONFIG_DIR = os.path.join(ROOT_DIR, "config")
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 
 # ─── Per-sibling naming conventions ───
