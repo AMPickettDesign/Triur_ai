@@ -75,10 +75,10 @@ function updateColorblindFromToggles() {
 }
 
 // ─── IPC (window controls) ───
-const { ipcRenderer } = require('electron');
-$('minimize-btn').addEventListener('click', () => ipcRenderer.send('window-minimize'));
-$('maximize-btn').addEventListener('click', () => ipcRenderer.send('window-maximize'));
-$('close-btn').addEventListener('click', () => ipcRenderer.send('window-close'));
+const { invoke } = window.__TAURI__.tauri;
+$('minimize-btn').addEventListener('click', () => invoke('minimize_window'));
+$('maximize-btn').addEventListener('click', () => invoke('maximize_window'));
+$('close-btn').addEventListener('click', () => invoke('close_window'));
 
 // ─── API Helpers ───
 async function apiGet(ep) {

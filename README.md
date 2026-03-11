@@ -41,6 +41,7 @@ Each sibling has their own memory, their own relationship with you, and their ow
 - [x] World awareness (weather + news)
 - [x] Glassmorphism UI with sibling theming
 - [x] GitHub Actions CI (Windows + Mac builds)
+- [x] Tauri migration (smaller, faster, native)
 - [ ] PyInstaller installer (no Python setup required)
 - [ ] Voice chat
 - [ ] Desktop agent + roaming chibi
@@ -53,6 +54,7 @@ Each sibling has their own memory, their own relationship with you, and their ow
 - Windows 10+ or macOS 12+
 - [Ollama](https://ollama.com) installed and running
 - `dolphin-llama3:8b` model pulled
+- [Rust](https://rustup.rs) (for building from source only)
 ```bash
 ollama pull dolphin-llama3:8b
 ```
@@ -71,8 +73,8 @@ pip install -r requirements.txt
 # Install Node dependencies
 cd app && npm install && cd ..
 
-# Start
-npm start --prefix app
+# Start (development)
+cd app && npm run dev
 ```
 
 Make sure Ollama is running before you launch.
@@ -83,12 +85,13 @@ Make sure Ollama is running before you launch.
 
 ```
 Triur.ai/
-├── app/                    # Electron frontend
-│   ├── main.js             # Main process (window, tray, server lifecycle)
-│   ├── renderer.js         # UI logic
-│   ├── index.html          # Main window
-│   ├── styles.css          # All styling
-│   └── package.json        # Node dependencies
+├── app/                  # Tauri frontend
+│   ├── renderer.js
+│   ├── index.html
+│   └── styles.css
+├── src-tauri/            # Tauri Rust shell
+│   ├── src/main.rs       # Window + Python server management
+│   └── tauri.conf.json   # App config
 ├── src/                    # Python backend
 │   ├── server.py           # Flask API server
 │   ├── brain.py            # Core AI logic

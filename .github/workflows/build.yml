@@ -20,9 +20,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Python dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pyinstaller
+        run: pip install -r requirements.txt pyinstaller
 
       - name: Build Python backend
         run: |
@@ -34,23 +32,29 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install Node dependencies
         run: |
           cd app
           npm install
 
-      - name: Build Electron app
-        run: |
-          cd app
-          npx electron-builder --win
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          tauriScript: npx tauri
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
           name: triur-windows
-          path: dist/*.exe
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
           retention-days: 30
 
   build-mac:
@@ -65,9 +69,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Python dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pyinstaller
+        run: pip install -r requirements.txt pyinstaller
 
       - name: Build Python backend
         run: |
@@ -79,23 +81,27 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install Node dependencies
         run: |
           cd app
           npm install
 
-      - name: Build Electron app
-        run: |
-          cd app
-          npx electron-builder --mac
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          tauriScript: npx tauri
 
       - name: Upload Mac build
         uses: actions/upload-artifact@v4
         with:
           name: triur-mac
-          path: dist/*.dmg
+          path: src-tauri/target/release/bundle/dmg/*.dmg
           retention-days: 30
 
   release:
