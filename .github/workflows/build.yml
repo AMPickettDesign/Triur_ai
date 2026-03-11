@@ -43,7 +43,7 @@ jobs:
       - name: Build Tauri app
         run: |
           cd app
-          npm run build
+          npm run build -- --config ../src-tauri/tauri.conf.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -91,7 +91,7 @@ jobs:
       - name: Build Tauri app
         run: |
           cd app
-          npm run build
+          npm run build -- --config ../src-tauri/tauri.conf.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
