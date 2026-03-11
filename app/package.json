@@ -3,9 +3,9 @@
   "version": "0.3.0",
   "description": "Triur.ai — Personal AI companion that grows with you",
   "scripts": {
-    "dev": "tauri dev --config ../src-tauri/tauri.conf.json",
-    "build": "tauri build --config ../src-tauri/tauri.conf.json",
-    "start": "tauri dev --config ../src-tauri/tauri.conf.json"
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "start": "tauri dev"
   },
   "keywords": [
     "ai",

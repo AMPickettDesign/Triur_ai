@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "identifier": "com.ampickettdesign.triur",
   "build": {
-    "frontendDist": "../app",
+    "frontendDist": "..",
     "devUrl": "http://localhost:5000",
     "beforeDevCommand": "",
     "beforeBuildCommand": ""
