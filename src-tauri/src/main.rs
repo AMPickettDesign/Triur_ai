@@ -1,75 +1,55 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::process::{Command, Child};
-use std::sync::Mutex;
-use tauri::{Manager, State};
+use std::process::Command;
+use tauri::Manager;
 
-struct PythonServer(Mutex<Option<Child>>);
-
-fn start_python_server() -> Option<Child> {
-    // Try bundled executable first (production)
-    // Fall back to python script (development)
+fn start_python_server() {
     let is_dev = cfg!(debug_assertions);
 
     if is_dev {
-        // Development — run Python directly
         #[cfg(target_os = "windows")]
-        let cmd = Command::new("python")
-            .args(&["-m", "flask", "--app", "src/server.py", "run", "--host=127.0.0.1", "--port=5000"])
+        let _ = Command::new("python")
+            .args(&["src/server.py"])
             .spawn();
 
         #[cfg(not(target_os = "windows"))]
-        let cmd = Command::new("python3")
-            .args(&["-m", "flask", "--app", "src/server.py", "run", "--host=127.0.0.1", "--port=5000"])
+        let _ = Command::new("python3")
+            .args(&["src/server.py"])
             .spawn();
-
-        cmd.ok()
     } else {
-        // Production — use bundled executable
         let exe_name = if cfg!(target_os = "windows") {
             "triur-brain.exe"
         } else {
             "triur-brain"
         };
-
-        Command::new(exe_name)
-            .spawn()
-            .ok()
+        let _ = Command::new(exe_name).spawn();
     }
 }
 
 #[tauri::command]
 fn minimize_window(window: tauri::Window) {
-    window.minimize().unwrap();
+    let _ = window.minimize();
 }
 
 #[tauri::command]
 fn maximize_window(window: tauri::Window) {
     if window.is_maximized().unwrap_or(false) {
-        window.unmaximize().unwrap();
+        let _ = window.unmaximize();
     } else {
-        window.maximize().unwrap();
+        let _ = window.maximize();
     }
 }
 
 #[tauri::command]
 fn close_window(window: tauri::Window) {
-    window.close().unwrap();
+    let _ = window.close();
 }
 
 fn main() {
     tauri::Builder::default()
-        .manage(PythonServer(Mutex::new(None)))
         .setup(|app| {
-            let server_state: State<PythonServer> = app.state();
-            let child = start_python_server();
-            *server_state.0.lock().unwrap() = child;
+            start_python_server();
             Ok(())
-        })
-        .on_window_event(|event| {
-            if let tauri::WindowEvent::CloseRequested { .. } = event.event() {
-                // Python server cleanup happens via OS process tree
-            }
         })
         .invoke_handler(tauri::generate_handler![
             minimize_window,

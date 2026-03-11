@@ -6,13 +6,14 @@ authors = ["Ashley Pickett"]
 license = "MIT"
 repository = "https://github.com/AMPickettDesign/Triur.ai"
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.77.2"
 
 [build-dependencies]
-tauri-build = { version = "1.5", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "1.8", features = ["shell-open", "window-all", "path-all"] }
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

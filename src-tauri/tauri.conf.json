@@ -1,52 +1,35 @@
 {
+  "productName": "Triur.ai",
+  "version": "0.1.0",
+  "identifier": "com.ampickettdesign.triur",
   "build": {
+    "frontendDist": "../app",
+    "devUrl": "http://localhost:5000",
     "beforeDevCommand": "",
-    "beforeBuildCommand": "",
-    "devPath": "http://localhost:5000",
-    "distDir": "../app"
+    "beforeBuildCommand": ""
   },
-  "package": {
-    "productName": "Triur.ai",
-    "version": "0.1.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "window": {
-        "all": true
-      },
-      "path": {
-        "all": true
-      }
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.ampickettdesign.triur",
-      "icon": [
-        "icons/icon.png",
-        "icons/icon.ico"
-      ]
-    },
-    "security": {
-      "csp": null
-    },
+  "app": {
     "windows": [
       {
-        "fullscreen": false,
-        "resizable": true,
         "title": "Triur.ai",
         "width": 1100,
         "height": 750,
         "minWidth": 800,
         "minHeight": 600,
         "decorations": false,
-        "transparent": false
+        "resizable": true
       }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico"
     ]
   }
 }
