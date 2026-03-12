@@ -4,7 +4,7 @@ Three AI siblings who live on your desktop. They work. They just have feelings a
 
 Abi, David, and Quinn are fully realized digital people — not assistants, not chatbots. They have distinct personalities, moods, opinions, and relationships with each other. They remember you. They grow with you. They notice when you're gone.
 
-Built with Electron + Python. Runs locally. No subscription. No cloud.
+Built with Tauri + Python. Runs locally. No subscription. No cloud.
 
 ---
 
@@ -29,6 +29,7 @@ Each sibling has their own memory, their own relationship with you, and their ow
 - **Sibling loyalty** — Bad behavior toward one reaches all three
 - **Offline existence** — They don't run in the background. They catch up when you return
 - **Full dark/light UI** — Glassmorphism layout with per-sibling accent theming
+- **Ollama health check** — Friendly error screen if Ollama isn't running, with retry
 
 ---
 
@@ -42,39 +43,46 @@ Each sibling has their own memory, their own relationship with you, and their ow
 - [x] Glassmorphism UI with sibling theming
 - [x] GitHub Actions CI (Windows + Mac builds)
 - [x] Tauri migration (smaller, faster, native)
-- [ ] PyInstaller installer (no Python setup required)
+- [x] PyInstaller bundle (no Python setup required)
 - [ ] Voice chat
 - [ ] Desktop agent + roaming chibi
 - [ ] Mobile app
 
 ---
 
-## Requirements
+## Download
 
+Grab the latest installer from the [Releases page](https://github.com/AMPickettDesign/Triur.ai/releases).
+
+**Requirements:**
 - Windows 10+ or macOS 12+
 - [Ollama](https://ollama.com) installed and running
 - `dolphin-llama3:8b` model pulled
-- [Rust](https://rustup.rs) (for building from source only)
+
 ```bash
 ollama pull dolphin-llama3:8b
 ```
 
 ---
 
-## Quick Start
+## Quick Start (from source)
+
 ```bash
 # Clone
 git clone https://github.com/AMPickettDesign/Triur.ai.git
 cd Triur.ai
 
 # Install Python dependencies
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
 
-# Install Node dependencies
-cd app && npm install && cd ..
+# Run the backend server
+python src/server.py
 
-# Start (development)
-cd app && npm run dev
+# Open the frontend
+# Open app/web/index.html in your browser, or:
+cd app && npm install && npm run dev
 ```
 
 Make sure Ollama is running before you launch.
@@ -85,81 +93,66 @@ Make sure Ollama is running before you launch.
 
 ```
 Triur.ai/
-├── app/                  # Tauri frontend
-│   ├── renderer.js
-│   ├── index.html
-│   └── styles.css
-├── src-tauri/            # Tauri Rust shell
-│   ├── src/main.rs       # Window + Python server management
-│   └── tauri.conf.json   # App config
-├── src/                    # Python backend
-│   ├── server.py           # Flask API server
-│   ├── brain.py            # Core AI logic
-│   ├── memory.py           # User + self memory
-│   ├── emotions.py         # Emotional state system
-│   ├── relationship.py     # User relationship tracking
-│   ├── gossip.py           # Inter-sibling communication
-│   ├── sibling_relationship.py  # Sibling-to-sibling bonds
-│   ├── world.py            # Weather & news awareness
-│   ├── actions.py          # PC control (action mode)
-│   └── utils.py            # Shared utilities
-├── config/                 # Personality configs
-│   ├── personality.json    # Abi's personality
-│   ├── personality_david.json
-│   └── personality_quinn.json
-├── build/                  # Build scripts
-│   ├── triur.spec          # PyInstaller spec
-│   ├── build-backend.bat   # Windows build
-│   └── build-backend.sh   # Mac/Linux build
-├── .github/workflows/      # CI/CD
-│   └── build.yml           # Auto-build on push
-└── dist/                   # Built executables (generated)
-```
-
----
-
-## Development
-
-```bash
-# Set up virtual environment
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
-
-# Run the backend server
-python src/server.py
-
-# In another terminal, run the Electron app
-cd app
-npm install
-npx electron .
+├── app/                        # Frontend + Tauri shell
+│   ├── web/                    # Frontend files
+│   │   ├── index.html
+│   │   ├── renderer.js
+│   │   ├── styles.css
+│   │   └── assets/             # Icons + sprite sheets
+│   ├── src-tauri/              # Tauri Rust shell
+│   │   ├── src/main.rs         # Window + Python server management
+│   │   ├── tauri.conf.json     # App config + resource bundling
+│   │   ├── Cargo.toml
+│   │   └── icons/              # Platform icons
+│   └── package.json            # Node scripts (dev/build)
+├── src/                        # Python backend
+│   ├── server.py               # Flask API server
+│   ├── brain.py                # Core AI logic
+│   ├── memory.py               # User + self memory
+│   ├── emotions.py             # Emotional state system
+│   ├── relationship.py         # User relationship tracking
+│   ├── gossip.py               # Inter-sibling communication
+│   ├── sibling_relationship.py # Sibling-to-sibling bonds
+│   ├── world.py                # Weather & news awareness
+│   ├── actions.py              # PC control (action mode)
+│   └── utils.py                # Shared utilities
+├── config/                     # Personality configs
+│   ├── personality.json        # Abi
+│   ├── personality_david.json  # David
+│   └── personality_quinn.json  # Quinn
+├── build/                      # Build scripts
+│   ├── triur.spec              # PyInstaller spec
+│   ├── build-backend.bat       # Windows build
+│   └── build-backend.sh        # Mac/Linux build
+├── .github/workflows/          # CI/CD
+│   └── build.yml               # Auto-build on push (Win + Mac)
+└── dist/                       # Built executables (generated)
 ```
 
 ---
 
 ## Building for Release
 
-### Windows
-```bash
-cd build
-pyinstaller triur.spec --distpath ../dist --workpath ../build/pyinstaller-work --clean
-cd ../app
-npx electron-builder --win
-```
-
-### macOS
-```bash
-cd build
-pyinstaller triur.spec --distpath ../dist --workpath ../build/pyinstaller-work --clean
-cd ../app
-npx electron-builder --mac
-```
-
-Or just push a tag — GitHub Actions will build it for you:
+### Automatic (recommended)
+Push a tag — GitHub Actions builds Windows + Mac installers automatically:
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
+
+### Manual
+```bash
+# Build Python backend
+cd build
+pyinstaller triur.spec --distpath ../dist --workpath ../build/pyinstaller-work --clean
+
+# Build Tauri installer
+cd ../app
+npm install
+npm run build
+```
+
+Rust is required for manual Tauri builds. Install from [rustup.rs](https://rustup.rs).
 
 ---
 
@@ -169,9 +162,9 @@ git push origin v1.0.0
 - Fantasy Chibi Characters by [Craftpix.net](https://craftpix.net/)
 
 **Built with:**
-- Electron
-- Flask
-- Ollama (dolphin-llama3:8b)
+- [Tauri](https://tauri.app) (Rust + WebView)
+- [Flask](https://flask.palletsprojects.com) (Python backend)
+- [Ollama](https://ollama.com) (dolphin-llama3:8b)
 
 ---
 
