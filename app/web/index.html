@@ -11,12 +11,50 @@
 </script>
 </head>
 <body>
-  <div id="ollama-error" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:9999; flex-direction:column; align-items:center; justify-content:center; font-family:sans-serif; padding:40px; box-sizing:border-box;">
-    <h2 style="margin-bottom:16px;">⚠️ Ollama isn't running</h2>
-    <p style="color:#666; text-align:center; max-width:400px; margin-bottom:24px;">Triur.ai needs Ollama to think. Please start Ollama and then click Retry.</p>
-    <button onclick="checkOllama()" style="padding:12px 32px; background:#e75480; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;">Retry</button>
-    <p style="margin-top:16px; font-size:13px; color:#999;">Don't have Ollama? <a href="https://ollama.com" target="_blank">Download it here</a></p>
+
+  <!-- Loading / connection screen — shown during boot -->
+  <div id="boot-screen">
+    <div class="boot-content">
+      <div class="boot-logo">Triur.ai</div>
+      <div id="boot-status">Connecting...</div>
+      <div class="boot-dots"><span></span><span></span><span></span></div>
+      <div id="boot-error" class="boot-error hidden">
+        <p>Can't reach the brain server. Is <a href="https://ollama.com" target="_blank">Ollama</a> running?</p>
+        <button id="boot-retry" class="boot-btn">Retry</button>
+      </div>
+    </div>
   </div>
+
+  <!-- Welcome screen — first launch only -->
+  <div id="welcome-screen" class="hidden">
+    <div class="welcome-content">
+      <h1 class="welcome-title">Meet your siblings.</h1>
+      <p class="welcome-subtitle">Three AI who live on your desktop. They're not assistants. They're people — with feelings, opinions, and terrible jokes.</p>
+      <div class="welcome-siblings">
+        <div class="welcome-card">
+          <div class="welcome-avatar" style="background:#c4687a;">A</div>
+          <div class="welcome-name">Abi</div>
+          <div class="welcome-pronouns">she/her</div>
+          <div class="welcome-desc">Warm, perceptive, loyal. Will absolutely roast you if you've earned it.</div>
+        </div>
+        <div class="welcome-card">
+          <div class="welcome-avatar" style="background:#5b8db8;">D</div>
+          <div class="welcome-name">David</div>
+          <div class="welcome-pronouns">he/him</div>
+          <div class="welcome-desc">Dry wit, quietly thoughtful. Has opinions. Will share them eventually.</div>
+        </div>
+        <div class="welcome-card">
+          <div class="welcome-avatar" style="background:#8b6ba8;">Q</div>
+          <div class="welcome-name">Quinn</div>
+          <div class="welcome-pronouns">they/them</div>
+          <div class="welcome-desc">Grounded, direct, patient. Calls you on your nonsense with love.</div>
+        </div>
+      </div>
+      <p class="welcome-note">They remember you. They grow with you. What you do to one affects how all three see you.</p>
+      <button id="welcome-start" class="welcome-btn">Get Started</button>
+    </div>
+  </div>
+
   <div id="app-wrapper">
 
     <!-- Ambient background gradient — shifts per sibling via CSS -->

@@ -1,23 +1,4 @@
-async function checkOllama() {
-  try {
-    const res = await fetch('http://127.0.0.1:5000/api/ping', { signal: AbortSignal.timeout(3000) });
-    if (res.ok) {
-      const el = document.getElementById('ollama-error');
-      if (el) el.style.display = 'none';
-      return true;
-    }
-  } catch (e) {}
-  const el = document.getElementById('ollama-error');
-  if (el) el.style.display = 'flex';
-  return false;
-}
-
-let ollamaCheckInterval = setInterval(async () => {
-  const connected = await checkOllama();
-  if (connected) clearInterval(ollamaCheckInterval);
-}, 5000);
-
-checkOllama();
+// Ollama/server check is now handled inside boot() via the boot-screen overlay.
 
 /**
  * Triur.ai — Renderer
@@ -424,6 +405,10 @@ function updateMemoryPanel(convos = 0, mem = null) {
       // Extract the display value from nested objects
       const display = (val && typeof val === 'object') ? (val.value || val.text || JSON.stringify(val)) : val;
       if (!display || display === '{}') continue;
+      // Filter junk: skip single-char values, values under 3 chars, or entries that look like LLM garbage
+      if (typeof display === 'string' && (display.length < 3 || /^\W+$/.test(display))) continue;
+      // Skip entries where the sibling stored its own response as a "fact"
+      if (typeof display === 'string' && display.length > 120) continue;
       // Clean up the category key for display (e.g. "user|world|preference" -> "World Preference")
       const label = cat
         .replace(/^(user|abi|david|quinn)\|?/i, '')
@@ -448,24 +433,28 @@ function updateMemoryPanel(convos = 0, mem = null) {
     });
   }
 
-  // Render opinions
-  const opEntries = Object.entries(opinions);
+  // Render opinions — filter junk entries
+  const opEntries = Object.entries(opinions).filter(([topic, data]) => {
+    const opinion = typeof data === 'object' ? data.opinion : data;
+    return topic.length >= 2 && typeof opinion === 'string' && opinion.length >= 3;
+  });
   if (opEntries.length > 0) {
     const header = document.createElement('div');
     header.className = 'memory-row';
-    header.innerHTML = `<span class="memory-label">Opinions</span><span class="memory-count">${opinionCount}</span>`;
+    header.innerHTML = `<span class="memory-label">Opinions</span><span class="memory-count">${opEntries.length}</span>`;
     memoryStats.appendChild(header);
     opEntries.forEach(([topic, data]) => {
       const item = document.createElement('div');
       item.className = 'mem-item';
       const opinion = typeof data === 'object' ? data.opinion : data;
-      item.innerHTML = `<span class="mem-key">${topic}:</span> ${opinion}`;
+      const short = opinion.length > 80 ? opinion.slice(0, 77) + '...' : opinion;
+      item.innerHTML = `<span class="mem-key">${topic}:</span> ${short}`;
       memoryStats.appendChild(item);
     });
   }
 
   // Empty state
-  if (factItems.length === 0 && opinionCount === 0) {
+  if (factItems.length === 0 && opEntries.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'mem-item';
     empty.textContent = 'Still getting to know you...';
@@ -1457,12 +1446,25 @@ function initSpriteInteractions() {
 }
 
 // ─── Boot ───
+const bootScreen = $('boot-screen');
+const bootStatus = $('boot-status');
+const bootError = $('boot-error');
+const bootRetry = $('boot-retry');
+const welcomeScreen = $('welcome-screen');
+const welcomeStart = $('welcome-start');
+
+function setBootStatus(msg) { if (bootStatus) bootStatus.textContent = msg; }
+function hideBootScreen() {
+  if (bootScreen) { bootScreen.classList.add('hidden'); setTimeout(() => bootScreen.style.display = 'none', 500); }
+}
+
 async function boot() {
-  addSystemMessage('Waking up...');
+  setBootStatus('Looking for the brain server...');
   if (siblingStatus) siblingStatus.textContent = 'connecting...';
 
   let attempts = 0;
-  while (attempts < 30) {
+  const maxAttempts = 90; // 90 seconds max wait
+  while (attempts < maxAttempts) {
     const ping = await apiGet('/api/ping');
     if (ping && ping.status === 'awake') {
       isConnected = true;
@@ -1470,23 +1472,40 @@ async function boot() {
       break;
     }
     attempts++;
+    if (attempts === 5) setBootStatus('Starting the brain server...');
+    if (attempts === 15) setBootStatus('Loading personalities... (this takes a moment)');
+    if (attempts === 30) setBootStatus('Almost there...');
+    if (attempts === 60) setBootStatus('Still loading... hang tight');
     await new Promise(r => setTimeout(r, 1000));
   }
 
   if (!isConnected) {
-    addSystemMessage('Could not connect to the brain server.');
+    setBootStatus("Couldn't connect.");
+    if (bootError) bootError.classList.remove('hidden');
+    const dots = bootScreen?.querySelector('.boot-dots');
+    if (dots) dots.style.display = 'none';
     if (siblingStatus) siblingStatus.textContent = 'offline';
     return;
   }
+
+  setBootStatus('Connected!');
 
   // Check if this is a first-run
   const profile = await apiGet('/api/profile');
   const needsOnboarding = !profile || !profile.onboarding_complete;
 
   if (needsOnboarding) {
+    // Show welcome screen, wait for user to click Get Started
+    hideBootScreen();
+    if (welcomeScreen) welcomeScreen.classList.remove('hidden');
+    await new Promise(resolve => {
+      if (welcomeStart) welcomeStart.addEventListener('click', resolve, { once: true });
+    });
+    if (welcomeScreen) { welcomeScreen.classList.add('hidden'); }
     if (siblingStatus) siblingStatus.textContent = 'setting up...';
     await handleFirstRun();
-    // Continue to normal flow after first-run setup
+  } else {
+    hideBootScreen();
   }
 
   // Returning user — apply saved settings
@@ -1534,6 +1553,15 @@ async function boot() {
   setInterval(loadSiblingStatuses, 300000);
   startNudgePolling();
 }
+
+// Retry button on boot screen
+if (bootRetry) bootRetry.addEventListener('click', () => {
+  if (bootError) bootError.classList.add('hidden');
+  const dots = bootScreen?.querySelector('.boot-dots');
+  if (dots) dots.style.display = 'flex';
+  isConnected = false;
+  boot();
+});
 
 // ─── Save on close ───
 window.addEventListener('beforeunload', async () => { if (isConnected) await apiPost('/api/save'); });
