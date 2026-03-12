@@ -19,6 +19,13 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: pip-win-${{ hashFiles('requirements.txt') }}
+          restore-keys: pip-win-
+
       - name: Install Python dependencies
         run: pip install -r requirements.txt pyinstaller
 
@@ -34,6 +41,16 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            app/src-tauri/target
+          key: rust-win-${{ hashFiles('app/src-tauri/Cargo.lock') }}
+          restore-keys: rust-win-
 
       - name: Install Node dependencies
         run: |
@@ -67,6 +84,13 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/pip
+          key: pip-mac-${{ hashFiles('requirements.txt') }}
+          restore-keys: pip-mac-
+
       - name: Install Python dependencies
         run: pip install -r requirements.txt pyinstaller
 
@@ -82,6 +106,16 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            app/src-tauri/target
+          key: rust-mac-${{ hashFiles('app/src-tauri/Cargo.lock') }}
+          restore-keys: rust-mac-
 
       - name: Install Node dependencies
         run: |

@@ -43,6 +43,9 @@ resources/python/
 *.tmp
 *.bak
 
+# Rust / Tauri
+app/src-tauri/target/
+
 # PyInstaller
 build/pyinstaller-work/
 *.spec.bak
